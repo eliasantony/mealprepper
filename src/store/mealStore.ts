@@ -12,6 +12,7 @@ interface MealState {
     rateMeal: (id: string, rating: number) => void;
     selectedMeal: Meal | null;
     setSelectedMeal: (meal: Meal | null) => void;
+    clearAllData: () => void;
 }
 
 export const useMealStore = create<MealState>()(
@@ -65,6 +66,7 @@ export const useMealStore = create<MealState>()(
                 })),
             selectedMeal: null,
             setSelectedMeal: (meal) => set({ selectedMeal: meal }),
+            clearAllData: () => set({ savedMeals: [], weekPlan: {} }),
         }),
         {
             name: 'meal-storage',
