@@ -5,7 +5,7 @@ import { Meal } from '@/types';
 import { getPublicRecipes } from '@/services/firestoreService';
 import { MealCard } from '@/components/Meal/MealCard';
 import { RecipeDetails } from '@/components/Meal/RecipeDetails';
-import { Search, Filter, Loader2, Globe } from 'lucide-react';
+import { Search, Filter, Loader2, Globe, ChefHat } from 'lucide-react';
 import { useMealStore } from '@/store/mealStore';
 import { saveMealToFirestore } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
@@ -80,6 +80,10 @@ export default function BrowsePage() {
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
                 />
+            </div>
+
+            <div className="w-144 h-144 flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
+                <ChefHat className="w-96 h-96 text-white" />
             </div>
 
             {isLoading ? (

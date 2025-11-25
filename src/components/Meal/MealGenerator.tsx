@@ -2,7 +2,6 @@
 
 import React, { useState } from 'react';
 import { Sparkles, Loader2, Plus } from 'lucide-react';
-import { generateMealSuggestion } from '@/lib/gemini';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
 import { Meal } from '@/types';
