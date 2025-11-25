@@ -39,14 +39,14 @@ export const DayColumn = ({ date, dayPlan, isToday, onSlotClick }: DayColumnProp
                 'flex flex-col gap-3 min-w-[220px] flex-1 rounded-2xl p-3 transition-all duration-300',
                 isToday
                     ? 'bg-gradient-to-b from-orange-500/10 to-transparent border border-orange-500/20 shadow-[0_0_30px_-10px_rgba(249,115,22,0.1)]'
-                    : 'bg-card/30 border border-white/5 hover:bg-card/50'
+                    : 'bg-card/30 border border-border hover:bg-card/50'
             )}
         >
             <div className="text-center mb-2 py-2">
                 <div className={cn("text-xs font-bold uppercase tracking-[0.2em] mb-1", isToday ? "text-orange-500" : "text-muted-foreground")}>
                     {format(dateObj, 'EEE')}
                 </div>
-                <div className={cn("text-3xl font-black tracking-tight", isToday ? "text-white" : "text-foreground/80")}>
+                <div className={cn("text-3xl font-black tracking-tight", isToday ? "text-primary" : "text-foreground/80")}>
                     {format(dateObj, 'd')}
                 </div>
             </div>

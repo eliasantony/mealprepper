@@ -24,8 +24,8 @@
     /* Zinc 900 */
 
     --muted: #f4f4f5;
-    --muted-foreground: #71717a;
-    /* Zinc 500 */
+    --muted-foreground: #52525b;
+    /* Zinc 600 - Darker for readability */
 
     --accent: #f4f4f5;
     --accent-foreground: #18181b;
@@ -33,17 +33,19 @@
     --destructive: #ef4444;
     --destructive-foreground: #fafafa;
 
-    --border: #e4e4e7;
-    /* Zinc 200 */
-    --input: #e4e4e7;
+    --border: #d4d4d8;
+    /* Zinc 300 - Darker for visibility */
+    --input: #d4d4d8;
     --ring: #f97316;
 
     --radius: 0.75rem;
 
     /* Glassmorphism Variables - Light */
-    --glass-bg: rgba(255, 255, 255, 0.7);
-    --glass-border: rgba(0, 0, 0, 0.05);
-    --glass-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.6) 0%, rgba(244, 244, 245, 0.6) 100%);
+    --glass-bg: rgba(255, 255, 255, 0.8);
+    /* Slightly more opaque */
+    --glass-border: rgba(0, 0, 0, 0.1);
+    /* Darker border */
+    --glass-card-bg: linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(244, 244, 245, 0.9) 100%);
   }
 
   .dark {

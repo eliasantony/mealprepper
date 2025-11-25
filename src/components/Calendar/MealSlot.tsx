@@ -38,17 +38,17 @@ export const MealSlot = ({ date, slotType, meal, onRemove, onClick }: MealSlotPr
                 'min-h-[120px] p-3 rounded-xl border border-dashed transition-all duration-300 relative group/slot cursor-pointer',
                 isOver
                     ? 'border-orange-500 bg-orange-500/10 shadow-[inset_0_0_20px_rgba(249,115,22,0.1)]'
-                    : 'border-white/10 hover:border-white/20 hover:bg-white/5',
+                    : 'border-border/60 hover:border-border hover:bg-secondary/50',
                 meal ? 'border-solid border-transparent bg-transparent p-0' : ''
             )}
         >
             {!meal && (
                 <>
-                    <div className="text-[10px] font-bold text-muted-foreground/40 uppercase tracking-widest mb-2 group-hover/slot:text-muted-foreground/60 transition-colors">
+                    <div className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-widest mb-2 group-hover/slot:text-muted-foreground transition-colors">
                         {slotLabels[slotType]}
                     </div>
                     <div className="absolute inset-0 flex items-center justify-center opacity-100 md:opacity-0 group-hover/slot:opacity-100 transition-opacity">
-                        <div className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center text-white">
+                        <div className="w-8 h-8 rounded-full bg-secondary flex items-center justify-center text-foreground shadow-sm border border-border">
                             <Plus className="w-4 h-4" />
                         </div>
                     </div>

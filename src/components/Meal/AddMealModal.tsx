@@ -35,29 +35,29 @@ export const AddMealModal = ({ isOpen, onClose, date, slotType }: AddMealModalPr
                     animate={{ opacity: 1, scale: 1 }}
                     exit={{ opacity: 0, scale: 0.95 }}
                     onClick={(e) => e.stopPropagation()}
-                    className="bg-card border border-white/10 rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
+                    className="bg-card border border-border rounded-2xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden flex flex-col"
                 >
-                    <div className="p-4 border-b border-white/10 flex items-center justify-between bg-white/5">
-                        <h2 className="text-lg font-semibold text-white flex items-center gap-2">
+                    <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+                        <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
                             <Plus className="w-5 h-5 text-orange-500" />
                             Add Meal to Slot
                         </h2>
                         <button
                             onClick={onClose}
-                            className="p-2 hover:bg-white/10 rounded-full transition-colors text-muted-foreground hover:text-white"
+                            className="p-2 hover:bg-muted rounded-full transition-colors text-muted-foreground hover:text-foreground"
                         >
                             <X className="w-5 h-5" />
                         </button>
                     </div>
 
-                    <div className="flex border-b border-white/10">
+                    <div className="flex border-b border-border">
                         <button
                             onClick={() => setActiveTab('generate')}
                             className={cn(
                                 "flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2",
                                 activeTab === 'generate'
                                     ? "text-orange-500 border-b-2 border-orange-500 bg-orange-500/5"
-                                    : "text-muted-foreground hover:text-white hover:bg-white/5"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             )}
                         >
                             <Sparkles className="w-4 h-4" />
@@ -69,7 +69,7 @@ export const AddMealModal = ({ isOpen, onClose, date, slotType }: AddMealModalPr
                                 "flex-1 py-3 text-sm font-medium transition-colors flex items-center justify-center gap-2",
                                 activeTab === 'saved'
                                     ? "text-orange-500 border-b-2 border-orange-500 bg-orange-500/5"
-                                    : "text-muted-foreground hover:text-white hover:bg-white/5"
+                                    : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
                             )}
                         >
                             <BookOpen className="w-4 h-4" />
@@ -77,7 +77,7 @@ export const AddMealModal = ({ isOpen, onClose, date, slotType }: AddMealModalPr
                         </button>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto p-6 bg-black/20">
+                    <div className="flex-1 overflow-y-auto p-6 bg-secondary/30">
                         {activeTab === 'generate' ? (
                             <div className="space-y-4">
                                 <p className="text-sm text-muted-foreground mb-4">
