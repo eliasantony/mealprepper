@@ -82,10 +82,6 @@ export default function BrowsePage() {
                 />
             </div>
 
-            <div className="w-144 h-144 flex items-center justify-center bg-gradient-to-br from-orange-500 to-red-600 shadow-lg shadow-orange-500/20">
-                <ChefHat className="w-96 h-96 text-white" />
-            </div>
-
             {isLoading ? (
                 <div className="flex justify-center py-12">
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
