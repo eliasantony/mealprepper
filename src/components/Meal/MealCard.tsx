@@ -42,20 +42,20 @@ export const MealCard = ({ meal, isOverlay, onClick }: MealCardProps) => {
             }}
         >
             <div className="flex items-start justify-between gap-2">
-                <div className="flex-1">
-                    <h4 className="font-medium text-foreground text-sm line-clamp-2">{meal.name}</h4>
-                    <div className="flex items-center gap-3 mt-2 text-xs text-muted-foreground">
-                        <div className="flex items-center gap-1">
-                            <Flame className="w-3 h-3 text-orange-500" />
-                            <span>{meal.macros.calories}</span>
+                <div className="flex items-start justify-between gap-3 mb-2">
+                    <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-2xl shadow-sm border border-border">
+                            {meal.emoji || '🍽️'}
                         </div>
-                        <div className="flex items-center gap-1">
-                            <Utensils className="w-3 h-3 text-blue-500" />
-                            <span>{meal.macros.protein}g P</span>
+                        <div>
+                            <h3 className="font-semibold text-foreground leading-tight line-clamp-1">{meal.name}</h3>
+                            <div className="text-xs text-muted-foreground font-medium text-orange-500">
+                                {meal.macros.calories} kcal
+                            </div>
                         </div>
                     </div>
+                    <GripVertical className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
                 </div>
-                <GripVertical className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
             </div>
         </div>
     );

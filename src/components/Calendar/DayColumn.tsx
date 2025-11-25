@@ -61,6 +61,30 @@ export const DayColumn = ({ date, dayPlan, isToday, onSlotClick }: DayColumnProp
                         onClick={() => onSlotClick(slot)}
                     />
                 ))}
+
+                {/* Daily Summary */}
+                <div className="mt-2 pt-3 border-t border-border">
+                    <div className="flex justify-between items-center text-xs">
+                        <span className="text-muted-foreground font-medium">Daily Total</span>
+                        <span className="font-bold text-foreground">
+                            {Object.values(dayPlan?.meals || {}).reduce((acc, meal) => acc + (meal?.macros.calories || 0), 0)} kcal
+                        </span>
+                    </div>
+                    <div className="grid grid-cols-3 gap-1 mt-2">
+                        <div className="text-[10px] text-center p-1 rounded bg-blue-500/10 text-blue-600">
+                            <div className="font-bold">{Object.values(dayPlan?.meals || {}).reduce((acc, meal) => acc + (meal?.macros.protein || 0), 0)}g</div>
+                            <div className="opacity-70">P</div>
+                        </div>
+                        <div className="text-[10px] text-center p-1 rounded bg-green-500/10 text-green-600">
+                            <div className="font-bold">{Object.values(dayPlan?.meals || {}).reduce((acc, meal) => acc + (meal?.macros.carbs || 0), 0)}g</div>
+                            <div className="opacity-70">C</div>
+                        </div>
+                        <div className="text-[10px] text-center p-1 rounded bg-yellow-500/10 text-yellow-600">
+                            <div className="font-bold">{Object.values(dayPlan?.meals || {}).reduce((acc, meal) => acc + (meal?.macros.fats || 0), 0)}g</div>
+                            <div className="opacity-70">F</div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     );

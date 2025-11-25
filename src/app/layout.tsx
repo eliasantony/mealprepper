@@ -3,6 +3,8 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Layout/Header";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { AuthProvider } from "@/context/AuthContext";
+import { AuthGuard } from "@/components/AuthGuard";
 import clsx from "clsx";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -26,10 +28,14 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          <Header />
-          <main className="flex-1 container mx-auto px-4 py-8">
-            {children}
-          </main>
+          <AuthProvider>
+            <AuthGuard>
+              <Header />
+              <main className="flex-1 container mx-auto px-4 pt-24 pb-8">
+                {children}
+              </main>
+            </AuthGuard>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

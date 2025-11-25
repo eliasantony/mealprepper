@@ -22,6 +22,12 @@ export interface Meal {
   type?: MealType; // Optional because a meal might not be assigned to a specific slot yet
   rating?: number;
   image?: string; // URL or base64
+  emoji?: string;
+  tags?: string[];
+  visibility?: 'public' | 'private';
+  userId?: string;
+  author?: string;
+  createdAt?: string;
 }
 
 export interface DayPlan {
