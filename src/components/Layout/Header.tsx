@@ -30,60 +30,71 @@ export const Header = () => {
 
                 {/* Desktop Nav */}
                 <nav className="hidden md:flex items-center gap-1">
-                    <Link
-                        href="/"
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            isActive('/')
-                                ? "text-foreground bg-secondary border border-border"
-                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
-                        )}
-                    >
-                        <Calendar className={cn("w-4 h-4", isActive('/') ? "text-orange-500" : "")} />
-                        <span>Weekly Plan</span>
-                    </Link>
-                    <Link
-                        href="/saved-meals"
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            isActive('/saved-meals')
-                                ? "text-foreground bg-secondary border border-border"
-                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
-                        )}
-                    >
-                        <BookOpen className={cn("w-4 h-4", isActive('/saved-meals') ? "text-orange-500" : "")} />
-                        <span>Saved Meals</span>
-                    </Link>
-                    <Link
-                        href="/browse"
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            isActive('/browse')
-                                ? "text-foreground bg-secondary border border-border"
-                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
-                        )}
-                    >
-                        <Globe className={cn("w-4 h-4", isActive('/browse') ? "text-orange-500" : "")} />
-                        <span>Browse</span>
-                    </Link>
-                    <Link
-                        href="/profile"
-                        className={cn(
-                            "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
-                            isActive('/profile')
-                                ? "text-foreground bg-secondary border border-border"
-                                : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
-                        )}
-                    >
-                        <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
-                            <img
-                                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
-                                alt="Profile"
-                                className="w-full h-full object-cover"
-                            />
-                        </div>
-                        <span>Profile</span>
-                    </Link>
+                    {user ? (
+                        <>
+                            <Link
+                                href="/dashboard"
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                                    isActive('/dashboard')
+                                        ? "text-foreground bg-secondary border border-border"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                                )}
+                            >
+                                <Calendar className={cn("w-4 h-4", isActive('/dashboard') ? "text-orange-500" : "")} />
+                                <span className="hidden lg:inline">Weekly Plan</span>
+                            </Link>
+                            <Link
+                                href="/saved-meals"
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                                    isActive('/saved-meals')
+                                        ? "text-foreground bg-secondary border border-border"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                                )}
+                            >
+                                <BookOpen className={cn("w-4 h-4", isActive('/saved-meals') ? "text-orange-500" : "")} />
+                                <span className="hidden lg:inline">Saved Meals</span>
+                            </Link>
+                            <Link
+                                href="/browse"
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                                    isActive('/browse')
+                                        ? "text-foreground bg-secondary border border-border"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                                )}
+                            >
+                                <Globe className={cn("w-4 h-4", isActive('/browse') ? "text-orange-500" : "")} />
+                                <span className="hidden lg:inline">Browse</span>
+                            </Link>
+                            <Link
+                                href="/profile"
+                                className={cn(
+                                    "flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-medium transition-all",
+                                    isActive('/profile')
+                                        ? "text-foreground bg-secondary border border-border"
+                                        : "text-muted-foreground hover:text-foreground hover:bg-secondary/50 border border-transparent"
+                                )}
+                            >
+                                <div className="w-5 h-5 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
+                                    <img
+                                        src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
+                                        alt="Profile"
+                                        className="w-full h-full object-cover"
+                                    />
+                                </div>
+                                <span className="hidden lg:inline">Profile</span>
+                            </Link>
+                        </>
+                    ) : (
+                        <Link
+                            href="/login"
+                            className="flex items-center gap-2 px-6 py-2 rounded-full text-sm font-medium text-white bg-gradient-to-r from-orange-500 to-red-600 hover:from-orange-600 hover:to-red-700 transition-all shadow-lg shadow-orange-500/20"
+                        >
+                            Login
+                        </Link>
+                    )}
                 </nav>
 
                 {/* Mobile Menu Button */}
@@ -105,56 +116,68 @@ export const Header = () => {
                         className="md:hidden border-b border-border bg-background/95 backdrop-blur-xl overflow-hidden"
                     >
                         <nav className="flex flex-col p-4 gap-2">
-                            <Link
-                                href="/"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                    isActive('/') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                )}
-                            >
-                                <Calendar className={cn("w-5 h-5", isActive('/') ? "text-orange-500" : "")} />
-                                <span>Weekly Plan</span>
-                            </Link>
-                            <Link
-                                href="/saved-meals"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                    isActive('/saved-meals') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                )}
-                            >
-                                <BookOpen className={cn("w-5 h-5", isActive('/saved-meals') ? "text-orange-500" : "")} />
-                                <span>Saved Meals</span>
-                            </Link>
-                            <Link
-                                href="/browse"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                    isActive('/browse') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                )}
-                            >
-                                <Globe className={cn("w-5 h-5", isActive('/browse') ? "text-orange-500" : "")} />
-                                <span>Browse</span>
-                            </Link>
-                            <Link
-                                href="/profile"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={cn(
-                                    "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
-                                    isActive('/profile') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
-                                )}
-                            >
-                                <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
-                                    <img
-                                        src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
-                                        alt="Profile"
-                                        className="w-full h-full object-cover"
-                                    />
-                                </div>
-                                <span>Profile</span>
-                            </Link>
+                            {user ? (
+                                <>
+                                    <Link
+                                        href="/dashboard"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                            isActive('/dashboard') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                        )}
+                                    >
+                                        <Calendar className={cn("w-5 h-5", isActive('/dashboard') ? "text-orange-500" : "")} />
+                                        <span>Weekly Plan</span>
+                                    </Link>
+                                    <Link
+                                        href="/saved-meals"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                            isActive('/saved-meals') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                        )}
+                                    >
+                                        <BookOpen className={cn("w-5 h-5", isActive('/saved-meals') ? "text-orange-500" : "")} />
+                                        <span>Saved Meals</span>
+                                    </Link>
+                                    <Link
+                                        href="/browse"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                            isActive('/browse') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                        )}
+                                    >
+                                        <Globe className={cn("w-5 h-5", isActive('/browse') ? "text-orange-500" : "")} />
+                                        <span>Browse</span>
+                                    </Link>
+                                    <Link
+                                        href="/profile"
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={cn(
+                                            "flex items-center gap-3 px-4 py-3 rounded-lg transition-colors",
+                                            isActive('/profile') ? "text-foreground bg-secondary" : "text-muted-foreground hover:text-foreground hover:bg-secondary/50"
+                                        )}
+                                    >
+                                        <div className="w-6 h-6 rounded-full bg-secondary flex items-center justify-center overflow-hidden border border-border">
+                                            <img
+                                                src={user?.photoURL || `https://api.dicebear.com/7.x/avataaars/svg?seed=${user?.email || 'User'}`}
+                                                alt="Profile"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                        <span>Profile</span>
+                                    </Link>
+                                </>
+                            ) : (
+                                <Link
+                                    href="/login"
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className="flex items-center justify-center gap-2 px-4 py-3 rounded-lg text-white bg-gradient-to-r from-orange-500 to-red-600 font-medium"
+                                >
+                                    Login
+                                </Link>
+                            )}
                         </nav>
                     </motion.div>
                 )}

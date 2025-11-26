@@ -6,7 +6,7 @@ import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 
-const PUBLIC_PATHS = ['/login'];
+const PUBLIC_PATHS = ['/login', '/'];
 
 export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const { user, loading } = useAuth();
@@ -17,14 +17,14 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
 
     useEffect(() => {
         if (!loading) {
-            if (!user && !PUBLIC_PATHS.includes(pathname)) {
+            if (!user && !PUBLIC_PATHS.includes(pathname) && pathname !== '/') {
                 router.push('/login');
-            } else if (user && pathname === '/login') {
-                router.push('/');
+            } else if (user && (pathname === '/login' || pathname === '/')) {
+                router.push('/dashboard');
             } else if (user && !isOnboardingComplete && pathname !== '/onboarding') {
                 router.push('/onboarding');
             } else if (user && isOnboardingComplete && pathname === '/onboarding' && searchParams.get('mode') !== 'edit') {
-                router.push('/');
+                router.push('/dashboard');
             }
         }
     }, [user, loading, pathname, router, isOnboardingComplete]);
