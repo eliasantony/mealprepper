@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import {
     User,
     GoogleAuthProvider,
@@ -9,7 +9,7 @@ import {
     onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getUserData, getSavedMeals } from '@/services/firestoreService';
+import { getUserData, getSavedMeals, getWeekPlan, saveWeekPlan } from '@/services/firestoreService';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
 
@@ -62,6 +62,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                     if (savedMeals.length > 0) {
                         useMealStore.getState().setSavedMeals(savedMeals);
                     }
+
+                    // Fetch week plan
+                    const weekPlan = await getWeekPlan(user.uid);
+                    if (weekPlan) {
+                        useMealStore.getState().setWeekPlan(weekPlan);
+                    }
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
@@ -74,6 +80,29 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
         return () => unsubscribe();
     }, []);
+
+    // Sync week plan changes to Firestore
+    useEffect(() => {
+        if (!user) return;
+
+        let timeoutId: NodeJS.Timeout;
+        let lastWeekPlan = useMealStore.getState().weekPlan;
+
+        const unsubscribe = useMealStore.subscribe((state) => {
+            if (state.weekPlan !== lastWeekPlan) {
+                lastWeekPlan = state.weekPlan;
+                clearTimeout(timeoutId);
+                timeoutId = setTimeout(() => {
+                    saveWeekPlan(user.uid, state.weekPlan);
+                }, 2000);
+            }
+        });
+
+        return () => {
+            unsubscribe();
+            clearTimeout(timeoutId);
+        };
+    }, [user]);
 
     const signInWithGoogle = async () => {
         const provider = new GoogleAuthProvider();

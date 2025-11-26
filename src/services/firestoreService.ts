@@ -91,3 +91,27 @@ export const deleteMealFromFirestore = async (userId: string, mealId: string) =>
         throw error;
     }
 };
+
+export const saveWeekPlan = async (userId: string, weekPlan: WeekPlan) => {
+    try {
+        await setDoc(doc(db, 'users', userId), { weekPlan }, { merge: true });
+    } catch (error) {
+        console.error('Error saving week plan:', error);
+        throw error;
+    }
+};
+
+export const getWeekPlan = async (userId: string): Promise<WeekPlan | null> => {
+    try {
+        const docRef = doc(db, 'users', userId);
+        const docSnap = await getDoc(docRef);
+        if (docSnap.exists()) {
+            const data = docSnap.data();
+            return data.weekPlan || null;
+        }
+        return null;
+    } catch (error) {
+        console.error('Error getting week plan:', error);
+        return null;
+    }
+};
