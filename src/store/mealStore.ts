@@ -22,7 +22,45 @@ export const useMealStore = create<MealState>()(
             savedMeals: [],
             weekPlan: {},
             addSavedMeal: (meal) =>
-                set((state) => ({ savedMeals: [...state.savedMeals, meal] })),
+                set((state) => {
+                    const existingIndex = state.savedMeals.findIndex(m => m.id === meal.id);
+                    let newSavedMeals = [...state.savedMeals];
+
+                    if (existingIndex >= 0) {
+                        newSavedMeals[existingIndex] = meal;
+                    } else {
+                        newSavedMeals.push(meal);
+                    }
+
+                    // Also update any instances of this meal in the weekPlan
+                    const newWeekPlan = { ...state.weekPlan };
+                    Object.keys(newWeekPlan).forEach(date => {
+                        const dayPlan = newWeekPlan[date];
+                        if (dayPlan.meals) {
+                            let dayUpdated = false;
+                            const newMeals = { ...dayPlan.meals };
+
+                            Object.keys(newMeals).forEach(slot => {
+                                if (newMeals[slot as MealType]?.id === meal.id) {
+                                    newMeals[slot as MealType] = meal;
+                                    dayUpdated = true;
+                                }
+                            });
+
+                            if (dayUpdated) {
+                                newWeekPlan[date] = {
+                                    ...dayPlan,
+                                    meals: newMeals
+                                };
+                            }
+                        }
+                    });
+
+                    return {
+                        savedMeals: newSavedMeals,
+                        weekPlan: newWeekPlan
+                    };
+                }),
             removeSavedMeal: (id) =>
                 set((state) => ({
                     savedMeals: state.savedMeals.filter((m) => m.id !== id),

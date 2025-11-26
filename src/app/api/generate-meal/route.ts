@@ -5,6 +5,7 @@ export async function POST(req: Request) {
   try {
     const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit } = await req.json();
 
+
     if (!prompt && !mealIdea && mode !== 'brainstorm' && mode !== 'recalculate') {
       return NextResponse.json({ error: 'Prompt, meal idea, or context is required' }, { status: 400 });
     }
@@ -35,7 +36,7 @@ export async function POST(req: Request) {
                 }
             ]
         `;
-    } else if (context) {
+    } else if (context && mode !== 'recalculate') {
       // Refinement Mode
       systemPrompt = `
                 You are a helpful meal planner assistant.
@@ -77,6 +78,7 @@ export async function POST(req: Request) {
                 1. Estimate the macros for the ENTIRE meal as described by the ingredients.
                 2. If the amounts are vague (e.g. "some salt"), assume negligible calories.
                 3. Be as accurate as possible with standard nutritional data.
+                4. Return NUMBERS only. Do NOT return null. If a value is unknown or negligible, return 0.
                 
                 Return ONLY a valid JSON object with the following structure, no markdown formatting:
                 {
@@ -114,6 +116,7 @@ export async function POST(req: Request) {
             "name": "Recipe Name",
             "description": "Brief description",
             "emoji": "🍲",
+            "servings": 2,
             "ingredients": [
                 { "name": "Ingredient 1", "amount": "100g" },
                 { "name": "Ingredient 2", "amount": "2 tbsp" }
@@ -142,13 +145,35 @@ export async function POST(req: Request) {
     }
 
     if (mode === 'recalculate') {
-      return NextResponse.json({ macros: data });
+      let macros = data;
+
+      // Handle case where AI wraps response in "macros" key
+      if (data.macros) {
+        macros = data.macros;
+      }
+
+      // Ensure values are numbers and handle strings with units (e.g. "500g")
+      for (const key of ['calories', 'protein', 'carbs', 'fats']) {
+        if (typeof macros[key] === 'string') {
+          macros[key] = parseFloat(macros[key]) || 0;
+        }
+      }
+
+      return NextResponse.json({ macros });
     }
 
     const meal = data;
 
     // Add a real unique ID
     meal.id = crypto.randomUUID();
+
+    // Default to public visibility
+    meal.visibility = 'public';
+
+    // Ensure servings is set
+    if (!meal.servings) {
+      meal.servings = userPreferences?.portions || 2;
+    }
 
     // Preserve tags if they came from an idea, or use generated ones
     if (mealIdea?.tags) {

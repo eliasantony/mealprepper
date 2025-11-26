@@ -4,16 +4,22 @@ import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useRouter } from 'next/navigation';
 import { Loader2, ChefHat } from 'lucide-react';
+import { useUserStore } from '@/store/userStore';
 
 export default function LoginPage() {
     const { user, loading, signInWithGoogle } = useAuth();
+    const { isOnboardingComplete } = useUserStore();
     const router = useRouter();
 
     useEffect(() => {
         if (!loading && user) {
-            router.push('/');
+            if (isOnboardingComplete) {
+                router.push('/');
+            } else {
+                router.push('/onboarding');
+            }
         }
-    }, [user, loading, router]);
+    }, [user, loading, router, isOnboardingComplete]);
 
     if (loading) {
         return (
@@ -27,7 +33,7 @@ export default function LoginPage() {
         <div className="min-h-[80vh] flex items-center justify-center px-4">
             <div className="w-full max-w-md space-y-8 text-center">
                 <div className="space-y-2">
-                    <div className="w-16 h-16 bg-orange-500 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/20">
+                    <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-red-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg shadow-orange-500/20">
                         <ChefHat className="w-8 h-8 text-white" />
                     </div>
                     <h1 className="text-3xl font-bold tracking-tight">Welcome to MealPrepper</h1>

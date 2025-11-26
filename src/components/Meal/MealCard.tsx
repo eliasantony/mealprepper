@@ -9,9 +9,10 @@ interface MealCardProps {
     meal: Meal;
     isOverlay?: boolean;
     onClick?: () => void;
+    hideHandle?: boolean;
 }
 
-export const MealCard = ({ meal, isOverlay, onClick }: MealCardProps) => {
+export const MealCard = ({ meal, isOverlay, onClick, hideHandle }: MealCardProps) => {
     const setSelectedMeal = useMealStore((state) => state.setSelectedMeal);
 
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
@@ -20,6 +21,7 @@ export const MealCard = ({ meal, isOverlay, onClick }: MealCardProps) => {
             type: 'meal',
             meal,
         },
+        disabled: !!hideHandle
     });
 
     const style = transform ? {
@@ -28,12 +30,13 @@ export const MealCard = ({ meal, isOverlay, onClick }: MealCardProps) => {
 
     return (
         <div
-            ref={setNodeRef}
+            ref={hideHandle ? undefined : setNodeRef}
             style={style}
-            {...listeners}
-            {...attributes}
+            {...(!hideHandle ? listeners : {})}
+            {...(!hideHandle ? attributes : {})}
             className={cn(
-                'bg-card p-3 rounded-lg shadow-sm border border-border cursor-grab active:cursor-grabbing group hover:border-orange-500/50 hover:shadow-md transition-all',
+                'bg-card p-3 rounded-lg shadow-sm border border-border group hover:border-orange-500/50 hover:shadow-md transition-all',
+                !hideHandle && 'cursor-grab active:cursor-grabbing',
                 isOverlay && 'shadow-xl rotate-2 scale-105 z-50 bg-card'
             )}
             onClick={() => {
@@ -42,19 +45,19 @@ export const MealCard = ({ meal, isOverlay, onClick }: MealCardProps) => {
             }}
         >
             <div className="flex items-start justify-between gap-2">
-                <div className="flex items-start justify-between gap-3 mb-2">
-                    <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-2xl shadow-sm border border-border">
-                            {meal.emoji || '🍽️'}
+                <div className="flex items-start justify-between gap-3 mb-2 w-full">
+                    <div className="flex items-center gap-3 flex-1">
+                        <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-2xl shadow-sm border border-border shrink-0">
+                            {meal.emoji ? meal.emoji.split(' ')[0] : '🍽️'}
                         </div>
-                        <div>
+                        <div className="min-w-0">
                             <h3 className="font-semibold text-foreground leading-tight line-clamp-1">{meal.name}</h3>
                             <div className="text-xs text-muted-foreground font-medium text-orange-500">
                                 {meal.macros.calories} kcal
                             </div>
                         </div>
                     </div>
-                    <GripVertical className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
+                    {!hideHandle && <GripVertical className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0" />}
                 </div>
             </div>
         </div>

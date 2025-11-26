@@ -21,7 +21,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={clsx(inter.className, "bg-background min-h-screen flex flex-col")}>
+      <body className={clsx(inter.className, "bg-background min-h-screen flex flex-col")} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

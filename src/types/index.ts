@@ -24,6 +24,7 @@ export interface Meal {
   image?: string; // URL or base64
   emoji?: string;
   tags?: string[];
+  servings?: number;
   visibility?: 'public' | 'private';
   userId?: string;
   author?: string;

@@ -363,7 +363,7 @@ export const OnboardingWizard = () => {
             </div>
 
             {/* Actions */}
-            <div className="flex justify-between mt-8 pt-8 border-t border-border">
+            <div className="sticky bottom-0 left-0 right-0 p-4 bg-background/95 backdrop-blur-xl border-t border-border mt-8 -mx-4 flex justify-between z-10">
                 <button
                     onClick={handleBack}
                     disabled={currentStep === 0}
