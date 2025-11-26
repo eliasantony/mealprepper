@@ -2,7 +2,7 @@
 
 import React, { useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
-import { useRouter, usePathname } from 'next/navigation';
+import { useRouter, usePathname, useSearchParams } from 'next/navigation';
 import { Loader2 } from 'lucide-react';
 import { useUserStore } from '@/store/userStore';
 
@@ -13,6 +13,7 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
     const { isOnboardingComplete } = useUserStore();
     const router = useRouter();
     const pathname = usePathname();
+    const searchParams = useSearchParams();
 
     useEffect(() => {
         if (!loading) {
@@ -22,6 +23,8 @@ export const AuthGuard = ({ children }: { children: React.ReactNode }) => {
                 router.push('/');
             } else if (user && !isOnboardingComplete && pathname !== '/onboarding') {
                 router.push('/onboarding');
+            } else if (user && isOnboardingComplete && pathname === '/onboarding' && searchParams.get('mode') !== 'edit') {
+                router.push('/');
             }
         }
     }, [user, loading, pathname, router, isOnboardingComplete]);

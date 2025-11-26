@@ -12,6 +12,27 @@ export const saveUserPreferences = async (userId: string, preferences: UserPrefe
     }
 };
 
+export const saveOnboardingData = async (userId: string, preferences: UserPreferences) => {
+    try {
+        await setDoc(doc(db, 'users', userId), {
+            preferences,
+            hasCompletedOnboarding: true
+        }, { merge: true });
+    } catch (error) {
+        console.error('Error saving onboarding data:', error);
+        throw error;
+    }
+};
+
+export const updateUserData = async (userId: string, data: any) => {
+    try {
+        await setDoc(doc(db, 'users', userId), data, { merge: true });
+    } catch (error) {
+        console.error('Error updating user data:', error);
+        throw error;
+    }
+};
+
 export const getUserData = async (userId: string) => {
     try {
         const docRef = doc(db, 'users', userId);

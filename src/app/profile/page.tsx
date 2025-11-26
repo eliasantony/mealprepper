@@ -92,7 +92,7 @@ export default function ProfilePage() {
                         <Settings className="w-5 h-5 text-orange-500" />
                         Preferences
                     </h2>
-                    <Link href="/onboarding" className="text-sm text-orange-500 hover:underline flex items-center gap-1">
+                    <Link href="/onboarding?mode=edit" className="text-sm text-orange-500 hover:underline flex items-center gap-1">
                         Edit
                         <ChevronRight className="w-4 h-4" />
                     </Link>

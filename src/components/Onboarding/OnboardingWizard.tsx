@@ -6,7 +6,7 @@ import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
 import { ChevronRight, Check, ChefHat, Flame, Clock, Scale, Users, Wheat, Nut, Milk, Egg, Fish, Bean } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { saveUserPreferences } from '@/services/firestoreService';
+import { saveUserPreferences, updateUserData, saveOnboardingData } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
 
 const steps = [
@@ -83,11 +83,15 @@ export const OnboardingWizard = () => {
         } else {
             if (user) {
                 try {
-                    await saveUserPreferences(user.uid, preferences);
+                    console.log("OnboardingWizard: Saving preferences and completion status for user", user.uid);
+                    await saveOnboardingData(user.uid, preferences);
+                    console.log("OnboardingWizard: Save successful");
                 } catch (error) {
                     console.error("Failed to save preferences:", error);
                     // Continue anyway to let user use the app
                 }
+            } else {
+                console.log("OnboardingWizard: No user found, skipping save");
             }
             completeOnboarding();
             router.push('/');

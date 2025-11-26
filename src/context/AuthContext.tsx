@@ -41,9 +41,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                 // Fetch user data from Firestore
                 try {
                     const userData = await getUserData(user.uid);
-                    if (userData && userData.preferences) {
-                        setPreferences(userData.preferences);
-                        completeOnboarding();
+                    console.log("AuthContext: Fetched userData:", userData);
+                    if (userData) {
+                        if (userData.preferences) {
+                            console.log("AuthContext: Setting preferences");
+                            setPreferences(userData.preferences);
+                        }
+                        if (userData.hasCompletedOnboarding) {
+                            console.log("AuthContext: Completing onboarding");
+                            completeOnboarding();
+                        } else {
+                            console.log("AuthContext: hasCompletedOnboarding is false or missing");
+                        }
+                    } else {
+                        console.log("AuthContext: No userData found");
                     }
 
                     // Fetch saved meals
@@ -57,7 +68,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
             } else {
                 resetUser();
             }
-            setLoading(false);
+            // Small delay to allow store updates to propagate before AuthGuard checks
+            setTimeout(() => setLoading(false), 100);
         });
 
         return () => unsubscribe();
