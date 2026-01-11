@@ -334,7 +334,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
                                 )}
 
                                 <div className="flex gap-2 shrink-0 self-end sm:self-auto">
-                                    {!isEditing && (
+                                    {!isEditing && user && displayMeal.userId === user.uid && (
                                         <button
                                             onClick={() => setIsEditing(true)}
                                             className="p-2 bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground rounded-lg transition-colors"

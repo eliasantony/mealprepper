@@ -6,7 +6,7 @@ export async function POST(req: Request) {
     const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit } = await req.json();
 
 
-    if (!prompt && !mealIdea && mode !== 'brainstorm' && mode !== 'recalculate') {
+    if (!prompt && !mealIdea && mode !== 'brainstorm' && mode !== 'recalculate' && mode !== 'brainstorm_week') {
       return NextResponse.json({ error: 'Prompt, meal idea, or context is required' }, { status: 400 });
     }
 
@@ -36,6 +36,44 @@ export async function POST(req: Request) {
                 }
             ]
         `;
+    } else if (mode === 'brainstorm_week') {
+      const typeCounts = context as Record<string, { count: number; dates: string[] }>;
+      const keywordsStr = prompt ? `User Intent/Keywords: "${prompt}"` : '';
+
+      systemPrompt = `
+        You are an efficient Meal Prep Pro.
+        The user has selected slots for their week and wants recipes.
+        The grouping is as follows (Type -> Number of meals needed):
+        ${Object.entries(typeCounts).map(([type, data]) => `- ${type}: ${data.count} meals`).join('\n')}
+
+        ${keywordsStr}
+
+        User Preferences:
+        - Diet: ${userPreferences?.dietaryType || 'Any'}
+        - Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
+        - Dislikes: ${userPreferences?.dislikes || 'None'}
+
+        CRITICAL INSTRUCTIONS:
+        1. For EACH unique meal type requested (e.g. 'Lunch'), provide ONE single recipe idea.
+        2. The user will cook this ONE recipe in bulk to cover the ${Object.values(typeCounts).map(d => d.count).join(', ')} slots respectively.
+        3. Make sure the ideas are distinct from each other (e.g. Lunch should be different from Dinner).
+        4. Return a JSON array of objects.
+        5. Include an estimate of calories per serving and a short string of key ingredients.
+
+        Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
+        [
+            {
+                "type": "lunch", // MUST match one of the requested keys exactly
+                "name": "Meal Name",
+                "description": "Brief description of this bulk meal prep dish",
+                "emoji": "🍲",
+                "servingsRequired": 3, // The number of meals requested for this type
+                "calories": 550, // Estimate
+                "keyIngredients": "Chicken, Rice, Broccoli"
+            }
+        ]
+      `;
+
     } else if (context && mode !== 'recalculate') {
       // Refinement Mode
       systemPrompt = `
@@ -140,7 +178,7 @@ export async function POST(req: Request) {
 
     const data = JSON.parse(cleanJson);
 
-    if (mode === 'brainstorm') {
+    if (mode === 'brainstorm' || mode === 'brainstorm_week') {
       return NextResponse.json({ ideas: data });
     }
 

@@ -9,11 +9,12 @@ import {
     DragEndEvent,
     DragStartEvent
 } from '@dnd-kit/core';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Sparkles } from 'lucide-react';
 import { DayColumn } from './DayColumn';
 import { useMealStore } from '@/store/mealStore';
 import { MealCard } from '@/components/Meal/MealCard';
 import { Meal, MealType } from '@/types';
+import { PlanWeekModal } from '@/components/Meal/PlanWeekModal';
 
 interface WeekViewProps {
     onSlotClick: (date: string, slot: MealType) => void;
@@ -24,6 +25,7 @@ export const WeekView = ({ onSlotClick }: WeekViewProps) => {
     const [activeMeal, setActiveMeal] = useState<Meal | null>(null);
     const [mounted, setMounted] = useState(false);
     const [weekOffset, setWeekOffset] = useState(0);
+    const [showPlanModal, setShowPlanModal] = useState(false);
     const todayRef = React.useRef<HTMLDivElement>(null);
 
     React.useEffect(() => {
@@ -120,14 +122,30 @@ export const WeekView = ({ onSlotClick }: WeekViewProps) => {
                 </button>
             </div>
 
+            <div className="px-1 flex justify-end">
+                <button
+                    onClick={() => setShowPlanModal(true)}
+                    className="flex items-center gap-2 text-sm font-medium text-orange-500 hover:text-orange-600 bg-orange-500/10 hover:bg-orange-500/20 px-4 py-2 rounded-lg transition-colors"
+                >
+                    <Sparkles className="w-4 h-4" />
+                    Plan my Week
+                </button>
+            </div>
+
+            <PlanWeekModal
+                isOpen={showPlanModal}
+                onClose={() => setShowPlanModal(false)}
+                currentDate={start}
+            />
+
             <DndContext
                 sensors={sensors}
                 onDragStart={handleDragStart}
                 onDragEnd={handleDragEnd}
                 autoScroll={{
-                    acceleration: 0.01, // Gentle acceleration
-                    interval: 120, // Slightly slower updates
-                    threshold: { x: 0.15, y: 0.15 }, // Trigger when close to edge
+                    acceleration: 0.01,
+                    interval: 120,
+                    threshold: { x: 0.15, y: 0.15 },
                     layoutShiftCompensation: true
                 }}
             >
