@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { WeekView } from "@/components/Calendar/WeekView";
 import { RecipeDetails } from "@/components/Meal/RecipeDetails";
 import { AddMealModal } from "@/components/Meal/AddMealModal";
@@ -11,6 +11,25 @@ export default function Dashboard() {
     const { selectedMeal, setSelectedMeal } = useMealStore();
     const [isAddModalOpen, setIsAddModalOpen] = useState(false);
     const [selectedSlot, setSelectedSlot] = useState<{ date: string, slot: MealType } | null>(null);
+
+    // Scroll to top on mount/refresh
+    useEffect(() => {
+        // Disable browser's scroll restoration
+        if ('scrollRestoration' in history) {
+            history.scrollRestoration = 'manual';
+        }
+
+        // Scroll to top with slight delay to ensure hydration is complete
+        const scrollToTop = () => {
+            window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+            document.documentElement.scrollTop = 0;
+            document.body.scrollTop = 0;
+        };
+
+        scrollToTop();
+        // Also try after a small delay for hydration
+        setTimeout(scrollToTop, 0);
+    }, []);
 
     const handleSlotClick = (date: string, slot: MealType) => {
         setSelectedSlot({ date, slot });

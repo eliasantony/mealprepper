@@ -29,6 +29,7 @@ export interface Meal {
   userId?: string;
   author?: string;
   createdAt?: string;
+  timeLimit?: number;
 }
 
 export interface DayPlan {
@@ -40,4 +41,16 @@ export interface DayPlan {
 
 export interface WeekPlan {
   [date: string]: DayPlan;
+}
+
+// Firestore storage types (slimmed down - stores IDs only)
+export interface DayPlanFirestore {
+  date: string;
+  meals: {
+    [key in MealType]?: string; // Recipe ID only
+  };
+}
+
+export interface WeekPlanFirestore {
+  [date: string]: DayPlanFirestore;
 }

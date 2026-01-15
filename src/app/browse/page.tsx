@@ -87,11 +87,11 @@ export default function BrowsePage() {
                     <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
                 </div>
             ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRecipes.length > 0 ? (
                         filteredRecipes.map(recipe => (
                             <div key={recipe.id} onClick={() => setSelectedMeal(recipe)} className="cursor-pointer hover:scale-[1.02] transition-transform">
-                                <MealCard meal={recipe} />
+                                <MealCard meal={recipe} hideHandle={true} />
                                 <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground px-1">
                                     <span>by {recipe.author || 'Anonymous'}</span>
                                     {savedMeals.some(m => m.id === recipe.id) && (

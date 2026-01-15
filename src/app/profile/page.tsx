@@ -108,6 +108,12 @@ export default function ProfilePage() {
                         <div className="font-medium capitalize">{preferences.weightGoal}</div>
                     </div>
                     <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Cuisines</div>
+                        <div className="font-medium">
+                            {preferences.cuisines?.length > 0 ? preferences.cuisines.join(', ') : 'Any'}
+                        </div>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
                         <div className="text-sm text-muted-foreground mb-1">Daily Calories</div>
                         <div className="font-medium">{preferences.calorieGoal} kcal</div>
                     </div>

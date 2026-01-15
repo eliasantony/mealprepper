@@ -34,8 +34,23 @@ export const WeekView = ({ onSlotClick }: WeekViewProps) => {
 
     React.useEffect(() => {
         if (mounted && weekOffset === 0) {
+            // Only scroll horizontally within the calendar, don't affect page vertical scroll
             setTimeout(() => {
-                todayRef.current?.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+                if (!todayRef.current) return;
+
+                // Find the scrollable container (the overflow-x-auto div)
+                const scrollContainer = todayRef.current.parentElement?.parentElement;
+                if (!scrollContainer) return;
+
+                // Calculate scroll position to center today
+                const todayElement = todayRef.current;
+                const containerWidth = scrollContainer.clientWidth;
+                const todayOffsetLeft = todayElement.offsetLeft;
+                const todayWidth = todayElement.offsetWidth;
+
+                // Center the today element
+                const scrollLeft = todayOffsetLeft - (containerWidth / 2) + (todayWidth / 2);
+                scrollContainer.scrollTo({ left: Math.max(0, scrollLeft), behavior: 'smooth' });
             }, 100);
         }
     }, [mounted, weekOffset]);

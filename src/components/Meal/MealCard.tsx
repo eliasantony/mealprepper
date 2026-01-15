@@ -50,15 +50,25 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle }: MealCardProps
                         <div className="w-10 h-10 rounded-lg bg-secondary flex items-center justify-center text-2xl shadow-sm border border-border shrink-0">
                             {meal.emoji ? meal.emoji.split(' ')[0] : '🍽️'}
                         </div>
-                        <div className="min-w-0">
-                            <h3 className="font-semibold text-foreground leading-tight line-clamp-1">{meal.name}</h3>
-                            <div className="text-xs text-muted-foreground font-medium text-orange-500">
-                                {meal.macros.calories} kcal
-                            </div>
+                        <h3 className="font-semibold text-foreground leading-tight line-clamp-1">{meal.name}</h3>
+                        <div className="flex gap-2 text-xs text-muted-foreground mt-1">
+                            <span className={cn("font-medium", meal.macros.calories > 0 ? "text-orange-500" : "")}>{meal.macros.calories} kcal</span>
+                            <span>•</span>
+                            <span>{meal.servings || 2} srv</span>
+                            {meal.timeLimit && (
+                                <>
+                                    <span>•</span>
+                                    <span>{meal.timeLimit}m</span>
+                                </>
+                            )}
                         </div>
                     </div>
-                    {!hideHandle && <GripVertical className="w-4 h-4 text-muted-foreground/50 group-hover:text-muted-foreground shrink-0" />}
                 </div>
+                {!hideHandle && (
+                    <div className="h-full flex items-center justify-center pl-2 border-l border-border/50">
+                        <GripVertical className="w-4 h-4 text-muted-foreground/30 group-hover:text-muted-foreground transition-colors" />
+                    </div>
+                )}
             </div>
         </div>
     );

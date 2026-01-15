@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 
 const steps = [
     { id: 'diet', title: 'Dietary Goals', description: 'What is your primary diet type?' },
+    { id: 'cuisines', title: 'Favorite Cuisines', description: 'What flavors do you love?' },
     { id: 'weight', title: 'Weight Goal', description: 'What do you want to achieve?' },
     { id: 'allergies', title: 'Allergies', description: 'Do you have any food allergies?' },
     { id: 'targets', title: 'Nutrition Targets', description: 'Set your daily goals.' },
@@ -40,6 +41,17 @@ const commonAllergies = [
     { id: 'Soy', label: 'Soy', emoji: '🫘' },
     { id: 'Eggs', label: 'Eggs', emoji: '🥚' },
     { id: 'Shellfish', label: 'Shellfish', emoji: '🦐' },
+];
+
+const cuisineOptions = [
+    { id: 'Italian', label: 'Italian', emoji: '🍝' },
+    { id: 'Mexican', label: 'Mexican', emoji: '🌮' },
+    { id: 'Asian', label: 'Asian', emoji: '🍜' },
+    { id: 'Indian', label: 'Indian', emoji: '🍛' },
+    { id: 'Mediterranean', label: 'Mediterranean', emoji: '🫒' },
+    { id: 'American', label: 'American', emoji: '🍔' },
+    { id: 'French', label: 'French', emoji: '🥐' },
+    { id: 'Middle Eastern', label: 'Middle Eastern', emoji: '🥙' },
 ];
 
 export const OnboardingWizard = () => {
@@ -125,9 +137,42 @@ export const OnboardingWizard = () => {
                                 <p className="text-sm text-muted-foreground">{diet.description}</p>
                             </button>
                         ))}
+
+                    </div >
+                );
+            case 1: // Cuisines
+                return (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {cuisineOptions.map((cuisine) => {
+                                const isSelected = preferences.cuisines?.includes(cuisine.id);
+                                return (
+                                    <button
+                                        key={cuisine.id}
+                                        onClick={() => {
+                                            const currentCuisines = preferences.cuisines || [];
+                                            const newCuisines = isSelected
+                                                ? currentCuisines.filter(c => c !== cuisine.id)
+                                                : [...currentCuisines, cuisine.id];
+                                            setPreferences({ cuisines: newCuisines });
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-3 p-4 rounded-xl border transition-all text-left",
+                                            isSelected
+                                                ? "bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400 shadow-sm"
+                                                : "bg-card border-border hover:border-orange-500/50"
+                                        )}
+                                    >
+                                        <div className="text-2xl">{cuisine.emoji}</div>
+                                        <span className="font-medium">{cuisine.label}</span>
+                                        {isSelected && <Check className="w-4 h-4 text-orange-500 ml-auto" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
                     </div>
                 );
-            case 1: // Weight Goal
+            case 2: // Weight Goal
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {weightGoals.map((goal) => (
@@ -148,7 +193,7 @@ export const OnboardingWizard = () => {
                         ))}
                     </div>
                 );
-            case 2: // Allergies
+            case 3: // Allergies
                 return (
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -187,7 +232,7 @@ export const OnboardingWizard = () => {
                         )}
                     </div>
                 );
-            case 3: // Targets
+            case 4: // Targets
                 return (
                     <div className="space-y-8">
                         <div className="space-y-4">
@@ -234,7 +279,7 @@ export const OnboardingWizard = () => {
                         </div>
                     </div>
                 );
-            case 4: // Cooking
+            case 5: // Cooking
                 return (
                     <div className="space-y-8">
                         <div className="space-y-4">

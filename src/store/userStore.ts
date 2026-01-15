@@ -13,6 +13,8 @@ export interface UserPreferences {
     cookingTime: number; // minutes
     portions: number;
     units: 'metric' | 'imperial';
+    cuisines: string[];
+    dislikes: string[];
 }
 
 interface UserState {
@@ -35,6 +37,8 @@ const initialPreferences: UserPreferences = {
     cookingTime: 30,
     portions: 2,
     units: 'metric',
+    cuisines: [],
+    dislikes: [],
 };
 
 export const useUserStore = create<UserState>()(
