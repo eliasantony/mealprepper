@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Meal } from '@/types';
 import { X, Clock, Flame, Utensils, ChefHat, Sparkles, Loader2, Plus, Check, Edit2, Save, Trash, RefreshCw, Droplets, Globe, Lock } from 'lucide-react';
+import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
@@ -115,14 +116,27 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
 
         setIsGenerating(true);
         try {
+            const token = user ? await user.getIdToken() : '';
             const response = await fetch('/api/generate-meal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     prompt: refinementPrompt,
                     context: displayMeal
                 }),
             });
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    toast.error('Daily limit reached. Please try again later.');
+                } else {
+                    toast.error('Failed to refine meal');
+                }
+                return;
+            }
 
             const data = await response.json();
             if (data.meal && onUpdate) {
@@ -132,6 +146,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
             }
         } catch (error) {
             console.error('Failed to refine meal:', error);
+            toast.error('An unexpected error occurred');
         } finally {
             setIsGenerating(false);
         }
@@ -148,11 +163,24 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
         };
 
         try {
+            const token = user ? await user.getIdToken() : '';
             const response = await fetch('/api/generate-meal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(payload),
             });
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    toast.error('Daily limit reached. Please try again later.');
+                } else {
+                    toast.error('Failed to recalculate macros');
+                }
+                return;
+            }
 
             const data = await response.json();
 
@@ -176,6 +204,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
             }
         } catch (error) {
             console.error('Failed to recalculate macros:', error);
+            toast.error('An unexpected error occurred');
         } finally {
             setIsRecalculating(false);
         }

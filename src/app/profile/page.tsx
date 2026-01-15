@@ -1,14 +1,16 @@
 "use client";
 
-import React from 'react';
+import React, { useState } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useUserStore } from '@/store/userStore';
-import { LogOut, User as UserIcon, Settings, ChevronRight } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, ChevronRight, MessageSquare } from 'lucide-react';
 import Link from 'next/link';
+import { FeedbackModal } from '@/components/Feedback/FeedbackModal';
 
 export default function ProfilePage() {
     const { user, signInWithGoogle, logout } = useAuth();
     const { preferences } = useUserStore();
+    const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
 
     return (
         <div className="max-w-2xl mx-auto space-y-8">
@@ -85,6 +87,29 @@ export default function ProfilePage() {
                 </Link>
             </section>
 
+            {/* Support Section */}
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <MessageSquare className="w-5 h-5 text-orange-500" />
+                    Support & Feedback
+                </h2>
+                <button
+                    onClick={() => setIsFeedbackOpen(true)}
+                    className="w-full glass-card p-4 rounded-xl flex items-center justify-between hover:bg-secondary/50 transition-colors group text-left"
+                >
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-secondary text-muted-foreground group-hover:text-foreground transition-colors">
+                            <MessageSquare className="w-5 h-5" />
+                        </div>
+                        <div>
+                            <h3 className="font-medium">Send Feedback</h3>
+                            <p className="text-sm text-muted-foreground">Help us improve MealPrepper</p>
+                        </div>
+                    </div>
+                    <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />
+                </button>
+            </section>
+
             {/* Preferences Summary */}
             <section className="space-y-4">
                 <div className="flex items-center justify-between">
@@ -127,6 +152,12 @@ export default function ProfilePage() {
                     </div>
                 </div>
             </section>
+
+            <FeedbackModal
+                isOpen={isFeedbackOpen}
+                onClose={() => setIsFeedbackOpen(false)}
+                userId={user?.uid}
+            />
         </div>
     );
 }

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, Sparkles, Loader2, Calendar, Check, ChefHat, ChevronLeft, ChevronRight, RefreshCw, Trash } from 'lucide-react';
+import { toast } from 'sonner';
 import { format, addDays, startOfWeek } from 'date-fns';
 import { Meal, MealType } from '@/types';
 import { cn } from '@/lib/utils';
@@ -111,15 +112,28 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
         });
 
         try {
+            const token = user ? await user.getIdToken() : '';
             const response = await fetch('/api/generate-meal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     mode: 'brainstorm_week',
                     prompt: keywords, // Optional keywords
                     context: typeCounts // We pass the structure of what we need
                 }),
             });
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    toast.error('Daily limit reached. Please try again later.');
+                } else {
+                    toast.error('Failed to generate ideas');
+                }
+                return;
+            }
 
             const data = await response.json();
             if (data.ideas) {
@@ -133,6 +147,7 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
             }
         } catch (error) {
             console.error(error);
+            toast.error('An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -145,9 +160,13 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
         setIsLoading(true);
 
         try {
+            const token = user ? await user.getIdToken() : '';
             const response = await fetch('/api/generate-meal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify({
                     mode: 'brainstorm_week',
                     prompt: keywords,
@@ -159,6 +178,15 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
                     }
                 }),
             });
+
+            if (!response.ok) {
+                if (response.status === 429) {
+                    toast.error('Daily limit reached. Please try again later.');
+                } else {
+                    toast.error('Failed to regenerate idea');
+                }
+                return;
+            }
 
             const data = await response.json();
             if (data.ideas && data.ideas.length > 0) {
@@ -174,6 +202,7 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
             }
         } catch (error) {
             console.error("Error regenerating idea", error);
+            toast.error('An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }
@@ -187,15 +216,28 @@ export const PlanWeekModal = ({ isOpen, onClose, currentDate }: PlanWeekModalPro
 
         for (const idea of ideas) {
             try {
+                const token = user ? await user.getIdToken() : '';
                 // Generate full recipe
                 const response = await fetch('/api/generate-meal', {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
                     body: JSON.stringify({
                         mealIdea: idea,
                         userPreferences: { portions: idea.servingsRequired } // Force servings to match slot count
                     }),
                 });
+
+                if (!response.ok) {
+                    if (response.status === 429) {
+                        toast.error('Daily limit reached. Stopped generating remaining recipes.');
+                        break; // Stop loop if limit reached
+                    }
+                    console.error("Failed response for idea", idea.name);
+                    continue;
+                }
 
                 const data = await response.json();
                 if (data.meal) {

@@ -8,6 +8,7 @@ import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
 import clsx from "clsx";
+import { Toaster } from "sonner";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -39,6 +40,7 @@ export default function RootLayout({
               </AuthGuard>
             </React.Suspense>
           </AuthProvider>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>

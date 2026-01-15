@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import { Sparkles, Loader2, Plus } from 'lucide-react';
+import { toast } from 'sonner';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
 import { Meal } from '@/types';
@@ -45,6 +46,8 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
         setGeneratedMeal(null);
 
         try {
+            const token = user ? await user.getIdToken() : '';
+
             const body = {
                 prompt: idea ? '' : (mode === 'brainstorm' ? `${selectedMealType} ideas` : prompt),
                 userPreferences: preferences,
@@ -56,9 +59,22 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
 
             const response = await fetch('/api/generate-meal', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
                 body: JSON.stringify(body),
             });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                if (response.status === 429) {
+                    toast.error('Daily limit reached. Please try again later.');
+                } else {
+                    toast.error(errorData.error || 'Failed to generate meal');
+                }
+                return;
+            }
 
             const data = await response.json();
 
@@ -72,6 +88,7 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
             }
         } catch (error) {
             console.error('Failed to generate meal:', error);
+            toast.error('An unexpected error occurred');
         } finally {
             setIsLoading(false);
         }

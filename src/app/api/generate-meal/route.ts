@@ -1,11 +1,51 @@
 import { generateMealSuggestion } from '@/lib/gemini';
 import { NextResponse } from 'next/server';
+import { z } from 'zod';
+
+// Define Validation Schemas
+const UserPreferencesSchema = z.object({
+  dietaryType: z.string().optional(),
+  allergies: z.array(z.string()).optional(),
+  dislikes: z.string().optional(),
+  portions: z.number().optional(),
+  units: z.string().optional(),
+});
+
+const RequestSchema = z.object({
+  prompt: z.string().optional(),
+  context: z.any().optional(),
+  userPreferences: UserPreferencesSchema.optional(),
+  mode: z.enum(['brainstorm', 'brainstorm_week', 'recipe', 'recalculate']).optional(),
+  mealIdea: z.any().optional(),
+  keywords: z.string().optional(),
+  timeLimit: z.any().optional(), // accepting string or number
+});
 
 export async function POST(req: Request) {
   try {
-    const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit } = await req.json();
+    // 1. Authorization Check
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      // For now, we enforce that a token MUST be present, even if we don't fully verify 
+      // the signature server-side without a service account.
+      // The middleware adds rate limiting based on this token.
+      return NextResponse.json({ error: 'Unauthorized', message: 'Missing or invalid token' }, { status: 401 });
+    }
 
+    const body = await req.json();
 
+    // 2. Input Validation
+    const validationResult = RequestSchema.safeParse(body);
+    if (!validationResult.success) {
+      return NextResponse.json(
+        { error: 'Invalid Input', details: validationResult.error.format() },
+        { status: 400 }
+      );
+    }
+
+    const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit } = validationResult.data;
+
+    // Additional logic check
     if (!prompt && !mealIdea && mode !== 'brainstorm' && mode !== 'recalculate' && mode !== 'brainstorm_week') {
       return NextResponse.json({ error: 'Prompt, meal idea, or context is required' }, { status: 400 });
     }
