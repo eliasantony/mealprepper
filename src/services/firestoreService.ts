@@ -1,7 +1,7 @@
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, getDocs, deleteDoc, query, where } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, getDocs, deleteDoc, query, where, deleteField } from 'firebase/firestore';
 import { UserPreferences } from '@/store/userStore';
-import { Meal, WeekPlan } from '@/types';
+import { Meal, WeekPlan, WeekPlanFirestore, MealType } from '@/types';
 
 export const saveUserPreferences = async (userId: string, preferences: UserPreferences) => {
     try {
@@ -92,22 +92,91 @@ export const deleteMealFromFirestore = async (userId: string, mealId: string) =>
     }
 };
 
+// Convert WeekPlan (with full Meal objects) to WeekPlanFirestore (with just IDs)
+const weekPlanToFirestore = (weekPlan: WeekPlan): WeekPlanFirestore => {
+    const result: WeekPlanFirestore = {};
+
+    for (const [date, dayPlan] of Object.entries(weekPlan)) {
+        if (!dayPlan || !dayPlan.meals) continue;
+
+        const mealIds: { [key in MealType]?: string } = {};
+        let hasAnyMeals = false;
+
+        for (const [mealType, meal] of Object.entries(dayPlan.meals)) {
+            if (meal && meal.id) {
+                mealIds[mealType as MealType] = meal.id;
+                hasAnyMeals = true;
+            }
+        }
+
+        // Only include this day if it has at least one meal
+        if (hasAnyMeals) {
+            result[date] = {
+                date: dayPlan.date,
+                meals: mealIds
+            };
+        }
+    }
+
+    return result;
+};
+
+// Convert WeekPlanFirestore (IDs) back to WeekPlan (full objects)
+// Requires savedMeals to resolve IDs
+const firestoreToWeekPlan = (firestorePlan: WeekPlanFirestore, recipes: Meal[]): WeekPlan => {
+    const recipeMap = new Map(recipes.map(r => [r.id, r]));
+    const result: WeekPlan = {};
+
+    for (const [date, dayPlan] of Object.entries(firestorePlan)) {
+        if (!dayPlan || !dayPlan.meals) continue;
+
+        const meals: { [key in MealType]?: Meal } = {};
+
+        for (const [mealType, recipeId] of Object.entries(dayPlan.meals)) {
+            if (recipeId) {
+                // Handle both old format (full Meal) and new format (string ID)
+                if (typeof recipeId === 'string') {
+                    const recipe = recipeMap.get(recipeId);
+                    if (recipe) {
+                        meals[mealType as MealType] = recipe;
+                    }
+                } else if (typeof recipeId === 'object' && recipeId !== null) {
+                    // Legacy: full Meal object stored in Firestore
+                    meals[mealType as MealType] = recipeId as Meal;
+                }
+            }
+        }
+
+        result[date] = {
+            date: dayPlan.date || date,
+            meals
+        };
+    }
+
+    return result;
+};
+
 export const saveWeekPlan = async (userId: string, weekPlan: WeekPlan) => {
     try {
-        await setDoc(doc(db, 'users', userId), { weekPlan }, { merge: true });
+        // Convert to slim format (IDs only) before saving
+        const slimPlan = weekPlanToFirestore(weekPlan);
+        await setDoc(doc(db, 'users', userId), { weekPlan: slimPlan }, { merge: true });
     } catch (error) {
         console.error('Error saving week plan:', error);
         throw error;
     }
 };
 
-export const getWeekPlan = async (userId: string): Promise<WeekPlan | null> => {
+export const getWeekPlan = async (userId: string, recipes: Meal[] = []): Promise<WeekPlan | null> => {
     try {
         const docRef = doc(db, 'users', userId);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
             const data = docSnap.data();
-            return data.weekPlan || null;
+            if (!data.weekPlan) return null;
+
+            // Convert from Firestore format (IDs) to full WeekPlan
+            return firestoreToWeekPlan(data.weekPlan, recipes);
         }
         return null;
     } catch (error) {

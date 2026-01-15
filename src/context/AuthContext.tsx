@@ -63,8 +63,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         useMealStore.getState().setSavedMeals(savedMeals);
                     }
 
-                    // Fetch week plan
-                    const weekPlan = await getWeekPlan(user.uid);
+                    // Fetch week plan (pass savedMeals to resolve recipe IDs)
+                    const weekPlan = await getWeekPlan(user.uid, savedMeals);
                     if (weekPlan) {
                         useMealStore.getState().setWeekPlan(weekPlan);
                     }

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Meal } from '@/types';
-import { X, Clock, Flame, Utensils, ChefHat, Sparkles, Loader2, Plus, Check, Edit2, Save, Trash, RefreshCw, Droplets, Globe, Lock } from 'lucide-react';
+import { X, Clock, Flame, Utensils, ChefHat, Sparkles, Loader2, Plus, Check, Edit2, Save, Trash, RefreshCw, Droplets, Globe, Lock, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMealStore } from '@/store/mealStore';
@@ -109,6 +109,21 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
         }
 
         return `${formattedValue}${textPart}`;
+    };
+
+    const handleCloneAndEdit = () => {
+        if (!user || !displayMeal) return;
+        const newMeal = {
+            ...displayMeal,
+            id: crypto.randomUUID(),
+            userId: user.uid,
+            author: user.displayName || 'Me',
+            name: `${displayMeal.name} (Copy)`,
+            visibility: 'private' as const,
+            createdAt: new Date().toISOString()
+        };
+        setDisplayMeal(newMeal);
+        setIsEditing(true);
     };
 
     const handleRefine = async () => {
@@ -373,7 +388,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
                                         </button>
                                     )}
 
-                                    {!isAlreadySaved && !isSaved && (
+                                    {user && displayMeal.userId === user.uid && (
                                         <button
                                             onClick={() => setVisibility(v => v === 'public' ? 'private' : 'public')}
                                             className={cn(

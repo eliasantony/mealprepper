@@ -112,6 +112,10 @@ export const useMealStore = create<MealState>()(
         }),
         {
             name: 'meal-storage',
+            partialize: (state) => ({
+                savedMeals: state.savedMeals,
+                weekPlan: state.weekPlan,
+            }),
         }
     )
 );

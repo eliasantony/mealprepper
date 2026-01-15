@@ -79,7 +79,7 @@ export default function SavedMealsPage() {
                         {filteredMeals.map((meal) => (
                             <div key={meal.id} className="relative group">
                                 <div onClick={() => setSelectedMeal(meal)} className="cursor-pointer">
-                                    <MealCard meal={meal} />
+                                    <MealCard meal={meal} hideHandle={true} />
                                 </div>
                                 <button
                                     onClick={(e) => handleDelete(e, meal.id)}
