@@ -24,6 +24,10 @@ export async function POST(req: Request) {
 
         const { category, message, rating, userId } = validation.data;
 
+        if (!firestore) {
+            return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
+        }
+
         await firestore.collection('feedback').add({
             userId,
             rating,

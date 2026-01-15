@@ -23,6 +23,10 @@ export async function POST(req: Request) {
 
         const { name, email, subject, message } = validation.data;
 
+        if (!firestore) {
+            return NextResponse.json({ error: 'Service not configured' }, { status: 503 });
+        }
+
         await firestore.collection('contact_messages').add({
             name,
             email,
