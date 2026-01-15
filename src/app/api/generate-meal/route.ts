@@ -5,8 +5,16 @@ import { z } from 'zod';
 // Define Validation Schemas
 const UserPreferencesSchema = z.object({
   dietaryType: z.string().optional(),
+  weightGoal: z.enum(['lose', 'maintain', 'gain']).optional(),
   allergies: z.array(z.string()).optional(),
-  dislikes: z.string().optional(),
+  calorieGoal: z.number().optional(),
+  proteinGoal: z.number().optional(),
+  carbsGoal: z.number().optional(),
+  fatsGoal: z.number().optional(),
+  cookingSkill: z.enum(['beginner', 'intermediate', 'advanced']).optional(),
+  cookingTime: z.number().optional(),
+  dislikes: z.array(z.string()).optional(),
+  cuisines: z.array(z.string()).optional(),
   portions: z.number().optional(),
   units: z.string().optional(),
 });
