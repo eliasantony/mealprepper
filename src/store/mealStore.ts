@@ -3,10 +3,20 @@ import { persist } from 'zustand/middleware';
 import { Meal, WeekPlan, MealType } from '@/types';
 
 interface MealState {
+    // My authored recipes
     savedMeals: Meal[];
+    // Bookmarked recipes from others
+    bookmarkedRecipes: Meal[];
     weekPlan: WeekPlan;
     addSavedMeal: (meal: Meal) => void;
     removeSavedMeal: (id: string) => void;
+    // Bookmark actions
+    addBookmark: (meal: Meal) => void;
+    removeBookmark: (id: string) => void;
+    setBookmarkedRecipes: (meals: Meal[]) => void;
+    isBookmarked: (id: string) => boolean;
+    // Combined getter for UI
+    getAllSavedMeals: () => Meal[];
     setMealForSlot: (date: string, slot: MealType, meal: Meal) => void;
     removeMealFromSlot: (date: string, slot: MealType) => void;
     rateMeal: (id: string, rating: number) => void;
@@ -19,8 +29,9 @@ interface MealState {
 
 export const useMealStore = create<MealState>()(
     persist(
-        (set) => ({
+        (set, get) => ({
             savedMeals: [],
+            bookmarkedRecipes: [],
             weekPlan: {},
             addSavedMeal: (meal) =>
                 set((state) => {
@@ -66,6 +77,25 @@ export const useMealStore = create<MealState>()(
                 set((state) => ({
                     savedMeals: state.savedMeals.filter((m) => m.id !== id),
                 })),
+            // Bookmark functions
+            addBookmark: (meal) =>
+                set((state) => {
+                    // Don't add if already bookmarked
+                    if (state.bookmarkedRecipes.some(m => m.id === meal.id)) {
+                        return state;
+                    }
+                    return {
+                        bookmarkedRecipes: [...state.bookmarkedRecipes, { ...meal, bookmarkedAt: new Date().toISOString() }]
+                    };
+                }),
+            removeBookmark: (id) =>
+                set((state) => ({
+                    bookmarkedRecipes: state.bookmarkedRecipes.filter((m) => m.id !== id),
+                })),
+            setBookmarkedRecipes: (meals) => set({ bookmarkedRecipes: meals }),
+            isBookmarked: (id) => get().bookmarkedRecipes.some(m => m.id === id),
+            // Combined getter for backward compatibility (used in weekly view)
+            getAllSavedMeals: () => [...get().savedMeals, ...get().bookmarkedRecipes],
             setSavedMeals: (meals) => set({ savedMeals: meals }),
             setWeekPlan: (plan) => set({ weekPlan: plan }),
             setMealForSlot: (date, slot, meal) =>
@@ -108,12 +138,13 @@ export const useMealStore = create<MealState>()(
                 })),
             selectedMeal: null,
             setSelectedMeal: (meal) => set({ selectedMeal: meal }),
-            clearAllData: () => set({ savedMeals: [], weekPlan: {} }),
+            clearAllData: () => set({ savedMeals: [], bookmarkedRecipes: [], weekPlan: {} }),
         }),
         {
             name: 'meal-storage',
             partialize: (state) => ({
                 savedMeals: state.savedMeals,
+                bookmarkedRecipes: state.bookmarkedRecipes,
                 weekPlan: state.weekPlan,
             }),
         }

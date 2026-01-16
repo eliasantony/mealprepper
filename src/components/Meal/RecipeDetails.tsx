@@ -14,9 +14,10 @@ interface RecipeDetailsProps {
     onClose: () => void;
     onUpdate?: (meal: Meal) => void;
     onSelect?: (meal: Meal) => void;
+    selectButtonLabel?: string;
 }
 
-export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetailsProps) => {
+export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect, selectButtonLabel }: RecipeDetailsProps) => {
     const [refinementPrompt, setRefinementPrompt] = useState('');
     const [isGenerating, setIsGenerating] = useState(false);
     const [isSaving, setIsSaving] = useState(false);
@@ -431,7 +432,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect }: RecipeDetai
                                             ) : (
                                                 <>
                                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                                                    {onSelect ? 'Save & Use' : 'Save Meal'}
+                                                    {selectButtonLabel || (onSelect ? 'Save & Use' : 'Save Meal')}
                                                 </>
                                             )}
                                         </button>

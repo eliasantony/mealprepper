@@ -2,13 +2,13 @@
 
 import React, { useEffect, useState } from 'react';
 import { Meal } from '@/types';
-import { getPublicRecipes } from '@/services/firestoreService';
+import { getPublicRecipes, bookmarkRecipe } from '@/services/firestoreService';
 import { MealCard } from '@/components/Meal/MealCard';
 import { RecipeDetails } from '@/components/Meal/RecipeDetails';
-import { Search, Filter, Loader2, Globe, ChefHat } from 'lucide-react';
+import { Search, Loader2, Bookmark } from 'lucide-react';
 import { useMealStore } from '@/store/mealStore';
-import { saveMealToFirestore } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 export default function BrowsePage() {
     const [recipes, setRecipes] = useState<Meal[]>([]);
@@ -16,7 +16,7 @@ export default function BrowsePage() {
     const [isLoading, setIsLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedMeal, setSelectedMeal] = useState<Meal | null>(null);
-    const { addSavedMeal, savedMeals } = useMealStore();
+    const { addBookmark, bookmarkedRecipes, savedMeals } = useMealStore();
     const { user } = useAuth();
 
     useEffect(() => {
@@ -45,16 +45,24 @@ export default function BrowsePage() {
         setFilteredRecipes(filtered);
     }, [searchQuery, recipes]);
 
-    const handleSaveRecipe = async (meal: Meal) => {
-        // Check if already saved
-        if (savedMeals.some(m => m.id === meal.id)) return;
+    // Check if recipe is already bookmarked or owned by user
+    const isBookmarked = (recipeId: string) => bookmarkedRecipes.some(m => m.id === recipeId);
+    const isOwned = (recipeId: string) => savedMeals.some(m => m.id === recipeId);
 
-        addSavedMeal(meal);
+    const handleBookmarkRecipe = async (meal: Meal) => {
+        if (isBookmarked(meal.id) || isOwned(meal.id)) {
+            setSelectedMeal(null);
+            return;
+        }
+
+        addBookmark(meal);
         if (user) {
             try {
-                await saveMealToFirestore(user.uid, meal);
+                await bookmarkRecipe(user.uid, meal.id);
+                toast.success('Recipe bookmarked!');
             } catch (error) {
-                console.error("Failed to save meal:", error);
+                console.error("Failed to bookmark recipe:", error);
+                toast.error('Failed to bookmark recipe');
             }
         }
         setSelectedMeal(null);
@@ -78,13 +86,13 @@ export default function BrowsePage() {
                     placeholder="Search recipes, ingredients, tags..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all"
+                    className="w-full pl-12 pr-4 py-3 bg-card border border-border rounded-xl focus:outline-none focus:ring-2 focus:ring-orange-500/50 transition-all"
                 />
             </div>
 
             {isLoading ? (
                 <div className="flex justify-center py-12">
-                    <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
+                    <Loader2 className="w-8 h-8 animate-spin text-orange-500" />
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -96,11 +104,16 @@ export default function BrowsePage() {
                                 className="cursor-pointer hover:scale-[1.02] transition-transform relative h-full"
                             >
                                 <MealCard meal={recipe} hideHandle={true} variant="expanded" />
-                                {savedMeals.some(m => m.id === recipe.id) && (
-                                    <div className="absolute top-3 right-3 text-[10px] px-2 py-1 bg-green-500/20 text-green-500 rounded-full font-medium border border-green-500/30">
-                                        Saved
+                                {isOwned(recipe.id) ? (
+                                    <div className="absolute top-3 right-3 text-[10px] px-2 py-1 bg-orange-500/20 text-orange-500 rounded-full font-medium border border-orange-500/30">
+                                        My Recipe
                                     </div>
-                                )}
+                                ) : isBookmarked(recipe.id) ? (
+                                    <div className="absolute top-3 right-3 text-[10px] px-2 py-1 bg-green-500/20 text-green-500 rounded-full font-medium border border-green-500/30 flex items-center gap-1">
+                                        <Bookmark className="w-3 h-3 fill-current" />
+                                        Bookmarked
+                                    </div>
+                                ) : null}
                             </div>
                         ))
                     ) : (
@@ -115,7 +128,8 @@ export default function BrowsePage() {
                 <RecipeDetails
                     meal={selectedMeal}
                     onClose={() => setSelectedMeal(null)}
-                    onSelect={(meal) => handleSaveRecipe(meal)}
+                    onSelect={!isOwned(selectedMeal.id) && !isBookmarked(selectedMeal.id) ? handleBookmarkRecipe : undefined}
+                    selectButtonLabel={isOwned(selectedMeal.id) ? undefined : isBookmarked(selectedMeal.id) ? undefined : "Bookmark Recipe"}
                 />
             )}
         </div>

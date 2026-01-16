@@ -92,6 +92,96 @@ export const deleteMealFromFirestore = async (userId: string, mealId: string) =>
     }
 };
 
+// ============ Bookmark Functions ============
+
+export interface Bookmark {
+    recipeId: string;
+    savedAt: string;
+    notes?: string;
+}
+
+// Bookmark a public recipe (just stores a reference)
+export const bookmarkRecipe = async (userId: string, recipeId: string, notes?: string): Promise<void> => {
+    try {
+        const bookmarkRef = doc(db, 'users', userId, 'bookmarks', recipeId);
+        await setDoc(bookmarkRef, {
+            recipeId,
+            savedAt: new Date().toISOString(),
+            notes: notes || null
+        });
+    } catch (error) {
+        console.error('Error bookmarking recipe:', error);
+        throw error;
+    }
+};
+
+// Remove a bookmark
+export const removeBookmark = async (userId: string, recipeId: string): Promise<void> => {
+    try {
+        await deleteDoc(doc(db, 'users', userId, 'bookmarks', recipeId));
+    } catch (error) {
+        console.error('Error removing bookmark:', error);
+        throw error;
+    }
+};
+
+// Get all bookmark references for a user
+export const getBookmarks = async (userId: string): Promise<Bookmark[]> => {
+    try {
+        const bookmarksRef = collection(db, 'users', userId, 'bookmarks');
+        const querySnapshot = await getDocs(bookmarksRef);
+        return querySnapshot.docs.map(doc => doc.data() as Bookmark);
+    } catch (error) {
+        console.error('Error getting bookmarks:', error);
+        return [];
+    }
+};
+
+// Get full recipe data for bookmarked recipes
+export const getBookmarkedRecipes = async (userId: string): Promise<Meal[]> => {
+    try {
+        const bookmarks = await getBookmarks(userId);
+        if (bookmarks.length === 0) return [];
+
+        // Batch fetch recipes by ID
+        const recipes: Meal[] = [];
+        for (const bookmark of bookmarks) {
+            const recipeDoc = await getDoc(doc(db, 'recipes', bookmark.recipeId));
+            if (recipeDoc.exists()) {
+                recipes.push({ ...recipeDoc.data() as Meal, bookmarkedAt: bookmark.savedAt });
+            }
+        }
+        return recipes;
+    } catch (error) {
+        console.error('Error getting bookmarked recipes:', error);
+        return [];
+    }
+};
+
+// Check if a recipe is bookmarked
+export const isRecipeBookmarked = async (userId: string, recipeId: string): Promise<boolean> => {
+    try {
+        const bookmarkRef = doc(db, 'users', userId, 'bookmarks', recipeId);
+        const bookmarkDoc = await getDoc(bookmarkRef);
+        return bookmarkDoc.exists();
+    } catch (error) {
+        console.error('Error checking bookmark:', error);
+        return false;
+    }
+};
+
+// Get user's own authored recipes
+export const getMyRecipes = async (userId: string): Promise<Meal[]> => {
+    try {
+        const q = query(collection(db, 'recipes'), where('userId', '==', userId));
+        const querySnapshot = await getDocs(q);
+        return querySnapshot.docs.map(doc => doc.data() as Meal);
+    } catch (error) {
+        console.error('Error getting my recipes:', error);
+        return [];
+    }
+};
+
 // Convert WeekPlan (with full Meal objects) to WeekPlanFirestore (with just IDs)
 const weekPlanToFirestore = (weekPlan: WeekPlan): WeekPlanFirestore => {
     const result: WeekPlanFirestore = {};

@@ -30,6 +30,7 @@ export interface Meal {
   author?: string;
   createdAt?: string;
   timeLimit?: number;
+  bookmarkedAt?: string; // Set when this is a bookmarked recipe
 }
 
 export interface DayPlan {

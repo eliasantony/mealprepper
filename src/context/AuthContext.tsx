@@ -9,7 +9,7 @@ import {
     onAuthStateChanged
 } from 'firebase/auth';
 import { auth } from '@/lib/firebase';
-import { getUserData, getSavedMeals, getWeekPlan, saveWeekPlan } from '@/services/firestoreService';
+import { getUserData, getMyRecipes, getBookmarkedRecipes, getWeekPlan, saveWeekPlan } from '@/services/firestoreService';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
 
@@ -57,14 +57,21 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         console.log("AuthContext: No userData found");
                     }
 
-                    // Fetch saved meals
-                    const savedMeals = await getSavedMeals(user.uid);
-                    if (savedMeals.length > 0) {
-                        useMealStore.getState().setSavedMeals(savedMeals);
+                    // Fetch user's authored recipes
+                    const myRecipes = await getMyRecipes(user.uid);
+                    if (myRecipes.length > 0) {
+                        useMealStore.getState().setSavedMeals(myRecipes);
                     }
 
-                    // Fetch week plan (pass savedMeals to resolve recipe IDs)
-                    const weekPlan = await getWeekPlan(user.uid, savedMeals);
+                    // Fetch bookmarked recipes
+                    const bookmarkedRecipes = await getBookmarkedRecipes(user.uid);
+                    if (bookmarkedRecipes.length > 0) {
+                        useMealStore.getState().setBookmarkedRecipes(bookmarkedRecipes);
+                    }
+
+                    // Fetch week plan (pass all available recipes to resolve recipe IDs)
+                    const allRecipes = [...myRecipes, ...bookmarkedRecipes];
+                    const weekPlan = await getWeekPlan(user.uid, allRecipes);
                     if (weekPlan) {
                         useMealStore.getState().setWeekPlan(weekPlan);
                     }
