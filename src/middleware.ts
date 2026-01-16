@@ -5,7 +5,7 @@ import { LRUCache } from 'lru-cache';
 // Rate limit configurations
 const RATES = {
     AI: {
-        limit: 5, // 5 requests
+        limit: 20, // 5 requests
         window: 10 * 60 * 1000, // 10 minutes
     },
     PUBLIC: {

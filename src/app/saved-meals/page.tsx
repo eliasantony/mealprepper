@@ -78,12 +78,12 @@ export default function SavedMealsPage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                         {filteredMeals.map((meal) => (
                             <div key={meal.id} className="relative group">
-                                <div onClick={() => setSelectedMeal(meal)} className="cursor-pointer">
-                                    <MealCard meal={meal} hideHandle={true} />
+                                <div onClick={() => setSelectedMeal(meal)} className="cursor-pointer h-full">
+                                    <MealCard meal={meal} hideHandle={true} variant="expanded" />
                                 </div>
                                 <button
                                     onClick={(e) => handleDelete(e, meal.id)}
-                                    className="absolute top-2 right-2 p-2 bg-red-500 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 z-10"
+                                    className="absolute top-3 right-3 p-2 bg-red-500 text-white rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 z-10"
                                     title="Delete Meal"
                                 >
                                     <Trash2 className="w-4 h-4" />

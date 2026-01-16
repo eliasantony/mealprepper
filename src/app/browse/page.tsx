@@ -90,14 +90,17 @@ export default function BrowsePage() {
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {filteredRecipes.length > 0 ? (
                         filteredRecipes.map(recipe => (
-                            <div key={recipe.id} onClick={() => setSelectedMeal(recipe)} className="cursor-pointer hover:scale-[1.02] transition-transform">
-                                <MealCard meal={recipe} hideHandle={true} />
-                                <div className="mt-2 flex items-center justify-between text-xs text-muted-foreground px-1">
-                                    <span>by {recipe.author || 'Anonymous'}</span>
-                                    {savedMeals.some(m => m.id === recipe.id) && (
-                                        <span className="text-green-500 font-medium">Saved</span>
-                                    )}
-                                </div>
+                            <div
+                                key={recipe.id}
+                                onClick={() => setSelectedMeal(recipe)}
+                                className="cursor-pointer hover:scale-[1.02] transition-transform relative h-full"
+                            >
+                                <MealCard meal={recipe} hideHandle={true} variant="expanded" />
+                                {savedMeals.some(m => m.id === recipe.id) && (
+                                    <div className="absolute top-3 right-3 text-[10px] px-2 py-1 bg-green-500/20 text-green-500 rounded-full font-medium border border-green-500/30">
+                                        Saved
+                                    </div>
+                                )}
                             </div>
                         ))
                     ) : (
