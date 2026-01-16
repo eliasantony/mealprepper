@@ -1,5 +1,5 @@
 import { db } from '@/lib/firebase';
-import { doc, setDoc, getDoc, updateDoc, collection, getDocs, deleteDoc, query, where, deleteField } from 'firebase/firestore';
+import { doc, setDoc, getDoc, updateDoc, collection, getDocs, deleteDoc, query, where, deleteField, increment } from 'firebase/firestore';
 import { UserPreferences } from '@/store/userStore';
 import { Meal, WeekPlan, WeekPlanFirestore, MealType } from '@/types';
 
@@ -183,4 +183,74 @@ export const getWeekPlan = async (userId: string, recipes: Meal[] = []): Promise
         console.error('Error getting week plan:', error);
         return null;
     }
+};
+
+// ============ AI Usage Tracking ============
+
+const AI_DAILY_LIMIT = 20;
+
+// Get today's date string for consistent key
+const getTodayKey = () => new Date().toISOString().split('T')[0]; // 'YYYY-MM-DD'
+
+// Get AI usage count for today
+export const getAiUsageToday = async (userId: string): Promise<number> => {
+    try {
+        const todayKey = getTodayKey();
+        const docRef = doc(db, 'users', userId, 'aiUsage', todayKey);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            return docSnap.data().count || 0;
+        }
+        return 0;
+    } catch (error) {
+        console.error('Error getting AI usage:', error);
+        return 0;
+    }
+};
+
+// Increment AI usage and return new count
+export const incrementAiUsage = async (userId: string, mode: string): Promise<number> => {
+    try {
+        const todayKey = getTodayKey();
+        const docRef = doc(db, 'users', userId, 'aiUsage', todayKey);
+        const docSnap = await getDoc(docRef);
+
+        if (docSnap.exists()) {
+            const currentCount = docSnap.data().count || 0;
+            await updateDoc(docRef, {
+                count: increment(1),
+                lastCall: new Date().toISOString(),
+                modes: { [mode]: increment(1) }
+            });
+            return currentCount + 1;
+        } else {
+            await setDoc(docRef, {
+                count: 1,
+                date: todayKey,
+                lastCall: new Date().toISOString(),
+                modes: { [mode]: 1 }
+            });
+            return 1;
+        }
+    } catch (error) {
+        console.error('Error incrementing AI usage:', error);
+        return 0;
+    }
+};
+
+// Get remaining AI calls for today
+export const getAiUsageRemaining = async (userId: string): Promise<{ used: number; remaining: number; limit: number }> => {
+    const used = await getAiUsageToday(userId);
+    return {
+        used,
+        remaining: Math.max(0, AI_DAILY_LIMIT - used),
+        limit: AI_DAILY_LIMIT
+    };
+};
+
+// Check if user can make an AI call (under limit)
+export const canMakeAiCall = async (userId: string): Promise<boolean> => {
+    const used = await getAiUsageToday(userId);
+    return used < AI_DAILY_LIMIT;
 };

@@ -1,16 +1,25 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { useUserStore } from '@/store/userStore';
-import { LogOut, User as UserIcon, Settings, ChevronRight, MessageSquare } from 'lucide-react';
+import { LogOut, User as UserIcon, Settings, ChevronRight, MessageSquare, Sparkles } from 'lucide-react';
 import Link from 'next/link';
 import { FeedbackModal } from '@/components/Feedback/FeedbackModal';
+import { getAiUsageRemaining } from '@/services/firestoreService';
 
 export default function ProfilePage() {
     const { user, signInWithGoogle, logout } = useAuth();
     const { preferences } = useUserStore();
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
+    const [aiUsage, setAiUsage] = useState({ used: 0, remaining: 20, limit: 20 });
+
+    // Fetch AI usage on mount
+    useEffect(() => {
+        if (user) {
+            getAiUsageRemaining(user.uid).then(setAiUsage);
+        }
+    }, [user]);
 
     return (
         <div className="max-w-2xl mx-auto space-y-8">
@@ -63,6 +72,34 @@ export default function ProfilePage() {
                     )}
                 </div>
             </section>
+
+            {/* AI Usage Section */}
+            {user && (
+                <section className="space-y-4">
+                    <h2 className="text-xl font-semibold flex items-center gap-2">
+                        <Sparkles className="w-5 h-5 text-orange-500" />
+                        AI Usage
+                    </h2>
+                    <div className="glass-card p-6 rounded-2xl">
+                        <div className="flex items-center justify-between mb-3">
+                            <span className="text-muted-foreground">Daily AI Calls</span>
+                            <span className="font-semibold">
+                                <span className="text-orange-500">{aiUsage.remaining}</span>
+                                <span className="text-muted-foreground"> / {aiUsage.limit} remaining</span>
+                            </span>
+                        </div>
+                        <div className="w-full bg-secondary rounded-full h-2.5 overflow-hidden">
+                            <div
+                                className="bg-gradient-to-r from-orange-500 to-red-500 h-full transition-all duration-300 rounded-full"
+                                style={{ width: `${(aiUsage.remaining / aiUsage.limit) * 100}%` }}
+                            />
+                        </div>
+                        <p className="text-xs text-muted-foreground mt-2">
+                            Resets daily at midnight. Used for generating recipes and meal ideas.
+                        </p>
+                    </div>
+                </section>
+            )}
 
             {/* App Settings */}
             <section className="space-y-4">

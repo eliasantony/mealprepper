@@ -1,6 +1,8 @@
 import { generateMealSuggestion } from '@/lib/gemini';
 import { NextResponse } from 'next/server';
 import { z } from 'zod';
+import { auth } from '@/lib/firebase-admin';
+import { checkAndIncrementAiUsage } from '@/lib/rateLimiter';
 
 // Define Validation Schemas
 const UserPreferencesSchema = z.object({
@@ -31,13 +33,38 @@ const RequestSchema = z.object({
 
 export async function POST(req: Request) {
   try {
-    // 1. Authorization Check
+    // 1. Authorization Check & User Identification
     const authHeader = req.headers.get('Authorization');
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      // For now, we enforce that a token MUST be present, even if we don't fully verify 
-      // the signature server-side without a service account.
-      // The middleware adds rate limiting based on this token.
       return NextResponse.json({ error: 'Unauthorized', message: 'Missing or invalid token' }, { status: 401 });
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    let userId: string | null = null;
+
+    // Try to verify token and extract userId (for rate limiting)
+    if (auth) {
+      try {
+        const decodedToken = await auth.verifyIdToken(token);
+        userId = decodedToken.uid;
+      } catch (tokenError) {
+        // Token verification failed - still allow request but log it
+        console.warn('Token verification failed:', tokenError);
+      }
+    }
+
+    // 2. Rate Limit Check (if userId available)
+    if (userId) {
+      const mode = (await req.clone().json()).mode || 'generate';
+      const rateLimitResult = await checkAndIncrementAiUsage(userId, mode);
+
+      if (!rateLimitResult.allowed) {
+        return NextResponse.json({
+          error: 'Daily Limit Reached',
+          message: `You've used all ${rateLimitResult.limit} AI calls for today. Your limit resets at midnight.`,
+          usage: rateLimitResult
+        }, { status: 429 });
+      }
     }
 
     const body = await req.json();

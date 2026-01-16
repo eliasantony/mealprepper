@@ -1,6 +1,7 @@
 import * as admin from 'firebase-admin';
 
 let firestore: admin.firestore.Firestore | null = null;
+let auth: admin.auth.Auth | null = null;
 
 // Only initialize if credentials are present
 if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && process.env.FIREBASE_PRIVATE_KEY) {
@@ -14,6 +15,7 @@ if (process.env.FIREBASE_PROJECT_ID && process.env.FIREBASE_CLIENT_EMAIL && proc
         });
     }
     firestore = admin.firestore();
+    auth = admin.auth();
 }
 
-export { firestore };
+export { firestore, auth };
