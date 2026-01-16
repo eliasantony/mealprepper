@@ -43,7 +43,7 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'comp
                 }}
             >
                 {/* Header with emoji and name */}
-                <div className="flex items-start gap-3 mb-3">
+                <div className="flex items-start gap-3 mb-3 pr-16">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-orange-500/20 to-red-500/10 flex items-center justify-center text-3xl shadow-sm border border-orange-500/20 shrink-0">
                         {meal.emoji ? meal.emoji.split(' ')[0] : '🍽️'}
                     </div>
