@@ -5,6 +5,9 @@ import { auth } from '@/lib/firebase-admin';
 import { checkAndIncrementAiUsage } from '@/lib/rateLimiter';
 import { sanitizeUserPreference, containsInjectionAttempt } from '@/lib/sanitizeInput';
 
+// Toggle for AI prompt/response logging (set to true for debugging)
+const DEBUG_LOGGING = false;
+
 // Define Validation Schemas
 const UserPreferencesSchema = z.object({
   dietaryType: z.string().optional(),
@@ -458,19 +461,22 @@ Return ONLY a valid JSON object with the following structure, no markdown format
     }
 
     // === PROMPT LOGGING FOR PERFORMANCE TESTING ===
-    // Uncomment the line below to see the full prompt in server logs
-    console.log('\n=== AI PROMPT (Mode: ' + mode + ') ===');
-    console.log('Prompt length:', systemPrompt.length, 'characters');
-    console.log('--- START PROMPT ---');
-    console.log(systemPrompt);
-    console.log('--- END PROMPT ---\n');
+    if (DEBUG_LOGGING) {
+      console.log('\n=== AI PROMPT (Mode: ' + mode + ') ===');
+      console.log('Prompt length:', systemPrompt.length, 'characters');
+      console.log('--- START PROMPT ---');
+      console.log(systemPrompt);
+      console.log('--- END PROMPT ---\n');
+    }
 
     const startTime = Date.now();
     const responseText = await generateMealSuggestion(systemPrompt);
     const endTime = Date.now();
 
-    console.log(`=== AI RESPONSE TIME: ${endTime - startTime}ms (${((endTime - startTime) / 1000).toFixed(2)}s) ===`);
-    console.log('Response length:', responseText.length, 'characters\n');
+    if (DEBUG_LOGGING) {
+      console.log(`=== AI RESPONSE TIME: ${endTime - startTime}ms (${((endTime - startTime) / 1000).toFixed(2)}s) ===`);
+      console.log('Response length:', responseText.length, 'characters\n');
+    }
 
     // Clean up the response if it contains markdown code blocks
     let cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();
