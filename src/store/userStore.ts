@@ -1,6 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 
+// Calorie distribution percentages for each meal type (should sum to ~1.0)
+export interface CalorieDistribution {
+    breakfast: number;
+    lunch: number;
+    afternoon_snack: number;
+    dinner: number;
+    evening_snack: number;
+}
+
 export interface UserPreferences {
     dietaryType: string;
     weightGoal: 'lose' | 'maintain' | 'gain';
@@ -15,6 +24,12 @@ export interface UserPreferences {
     units: 'metric' | 'imperial';
     cuisines: string[];
     dislikes: string[];
+    // New preferences for AI optimization
+    region: string;
+    budget: 'low' | 'medium' | 'high' | 'premium';
+    tasteProfile: string; // AI-generated summary of user's taste preferences
+    additionalNotes: string; // User's free-text notes for AI fine-tuning
+    calorieDistribution: CalorieDistribution; // Custom calorie distribution per meal type
 }
 
 interface UserState {
@@ -39,6 +54,18 @@ const initialPreferences: UserPreferences = {
     units: 'metric',
     cuisines: [],
     dislikes: [],
+    // New defaults for AI optimization
+    region: 'Austria',
+    budget: 'medium',
+    tasteProfile: '',
+    additionalNotes: '',
+    calorieDistribution: {
+        breakfast: 0.20,
+        lunch: 0.30,
+        afternoon_snack: 0.10,
+        dinner: 0.30,
+        evening_snack: 0.10,
+    },
 };
 
 export const useUserStore = create<UserState>()(

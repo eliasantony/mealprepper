@@ -19,6 +19,18 @@ const UserPreferencesSchema = z.object({
   cuisines: z.array(z.string()).optional(),
   portions: z.number().optional(),
   units: z.string().optional(),
+  // New preferences for AI optimization
+  region: z.string().optional(),
+  budget: z.enum(['low', 'medium', 'high', 'premium']).optional(),
+  tasteProfile: z.string().optional(),
+  additionalNotes: z.string().optional(),
+  calorieDistribution: z.object({
+    breakfast: z.number(),
+    lunch: z.number(),
+    afternoon_snack: z.number(),
+    dinner: z.number(),
+    evening_snack: z.number(),
+  }).optional(),
 });
 
 const RequestSchema = z.object({
@@ -85,7 +97,87 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: 'Prompt, meal idea, or context is required' }, { status: 400 });
     }
 
+    // === HELPER FUNCTIONS FOR AI PROMPT OPTIMIZATION ===
+
+    // Budget guidance mapping
+    const getBudgetContext = (budget?: string): string => {
+      const budgetMap: Record<string, string> = {
+        low: 'BUDGET: Low - Use ONLY common, affordable staples (rice, pasta, potatoes, eggs, chicken thighs, seasonal vegetables, legumes). Avoid specialty items.',
+        medium: 'BUDGET: Medium - Use standard supermarket ingredients. Occasional premium items are okay but keep it practical.',
+        high: 'BUDGET: High - You can include quality ingredients like fresh fish, good cuts of meat, and specialty cheeses.',
+        premium: 'BUDGET: Premium - Feel free to use gourmet ingredients, specialty items, and premium cuts.',
+      };
+      return budgetMap[budget || 'medium'] || budgetMap.medium;
+    };
+
+    // Calorie distribution by meal type - uses user's custom settings if available
+    const getMealCalorieTarget = (mealType: string, dailyCalories: number): number => {
+      // Default distributions (used as fallback)
+      const defaultDistributions: Record<string, number> = {
+        breakfast: 0.20,
+        lunch: 0.30,
+        afternoon_snack: 0.10,
+        dinner: 0.30,
+        evening_snack: 0.10,
+        // Legacy/alternative keys
+        brunch: 0.25,
+        snack: 0.10,
+        dessert: 0.10,
+      };
+
+      // Use user's custom distribution if available
+      const userDist = userPreferences?.calorieDistribution;
+      const distributions: Record<string, number> = userDist ? {
+        breakfast: userDist.breakfast,
+        lunch: userDist.lunch,
+        afternoon_snack: userDist.afternoon_snack,
+        dinner: userDist.dinner,
+        evening_snack: userDist.evening_snack,
+        // Legacy keys always use defaults
+        brunch: 0.25,
+        snack: 0.10,
+        dessert: 0.10,
+      } : defaultDistributions;
+
+      // Extract base meal type (e.g., "lunch_1" -> "lunch")
+      const baseMealType = mealType.toLowerCase().split('_')[0];
+      const ratio = distributions[baseMealType] || 0.30; // Default to 30% if unknown
+      return Math.round(dailyCalories * ratio);
+    };
+
+    // Region and ingredient context
+    const getRegionContext = (region?: string): string => {
+      if (!region || region === 'Austria') {
+        return `
+REGION: User is based in Austria/Germany.
+- Use ingredients commonly available in Austrian/German supermarkets (Billa, Spar, Hofer/Aldi).
+- Prefer European measurement conventions (metric).`;
+      }
+      return `REGION: User is based in ${region}. Prefer locally available ingredients.`;
+    };
+
+    // Ingredient simplification instruction
+    const INGREDIENT_INSTRUCTION = `
+INGREDIENT GUIDELINES:
+- Use COMMON ingredients only.
+- AVOID specialty items like "low-sodium salt", "aged balsamic vinegar", "truffle oil", or niche products.
+- Stick to staples found in any standard supermarket.
+- Use simple ingredient names (e.g., "salt" not "Himalayan pink salt", "olive oil" not "extra virgin cold-pressed olive oil").`;
+
+    // Taste profile and notes context
+    const getTasteProfileContext = (tasteProfile?: string, additionalNotes?: string): string => {
+      let context = '';
+      if (tasteProfile && tasteProfile.trim()) {
+        context += `\nTASTE PROFILE: ${tasteProfile}`;
+      }
+      if (additionalNotes && additionalNotes.trim()) {
+        context += `\nUSER NOTES: ${additionalNotes}`;
+      }
+      return context;
+    };
+
     let systemPrompt = '';
+
 
     if (mode === 'brainstorm') {
       const timeLimitStr = timeLimit ? `Time limit: ${timeLimit} minutes` : '';
@@ -101,31 +193,36 @@ export async function POST(req: Request) {
       const weightGoalContext = userWeightGoal ? weightGoalMap[userWeightGoal] || 'balanced meals' : 'balanced meals';
 
       systemPrompt = `
-            You are a creative chef and nutritionist. Suggest 3-5 distinct meal ideas based on this request: "${prompt}".
-            ${timeLimitStr}
-            ${keywordsStr}
-            
-            User Profile:
-            - Diet: ${userPreferences?.dietaryType || 'Any'}
-            - Weight Goal: ${weightGoalContext}
-            - Daily Calorie Target: ${userPreferences?.calorieGoal || 2000} kcal
-            - Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
-            - Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
-            - Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
-            - Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
-            - Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
+You are a creative chef and nutritionist. Suggest 3-5 distinct meal ideas based on this request: "${prompt}".
+${timeLimitStr}
+${keywordsStr}
 
-            IMPORTANT: Tailor your suggestions to the user's weight goal and calorie target.
+User Profile:
+- Diet: ${userPreferences?.dietaryType || 'Any'}
+- Weight Goal: ${weightGoalContext}
+- Daily Calorie Target: ${userPreferences?.calorieGoal || 2000} kcal
+- Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
+- Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
+- Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
+- Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
+- Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
 
-            Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
-            [
-                {
-                    "name": "Meal Name",
-                    "description": "Very brief description (1 sentence)",
-                    "emoji": "🍲 (Only one most fitting)",
-                    "tags": ["High Protein", "Quick", "Vegetarian"]
-                }
-            ]
+${getRegionContext(userPreferences?.region)}
+${getBudgetContext(userPreferences?.budget)}
+${INGREDIENT_INSTRUCTION}
+${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
+
+IMPORTANT: Tailor your suggestions to the user's weight goal and calorie target.
+
+Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
+[
+    {
+        "name": "Meal Name",
+        "description": "Very brief description (1 sentence)",
+        "emoji": "🍲 (Only one most fitting)",
+        "tags": ["High Protein", "Quick", "Vegetarian"]
+    }
+]
         `;
     } else if (mode === 'brainstorm_week') {
       const typeCounts = context as Record<string, { count: number; dates: string[] }>;
@@ -148,46 +245,60 @@ export async function POST(req: Request) {
 
       // Calculate approximate per-meal calorie target based on meal type
       const dailyCalories = userPreferences?.calorieGoal || 2000;
-      const totalMealsRequested = Object.values(typeCounts).reduce((sum, d) => sum + d.count, 0);
+
+      // Create calorie targets for each meal type requested
+      const mealTypeCalorieTargets = Object.keys(typeCounts).map(type => {
+        const target = getMealCalorieTarget(type, dailyCalories);
+        return `- ${type}: Target ~${target} kcal per serving`;
+      }).join('\n');
 
       systemPrompt = `
-        You are an efficient Meal Prep Pro and nutritionist.
-        The user has selected slots for their week and wants recipes.
-        The grouping is as follows (Type -> Number of meals needed):
-        ${Object.entries(typeCounts).map(([type, data]) => `- ${type}: ${data.count} meals`).join('\n')}
+You are an efficient Meal Prep Pro and nutritionist.
+The user has selected slots for their week and wants recipes.
+The grouping is as follows (Type -> Number of meals needed):
+${Object.entries(typeCounts).map(([type, data]) => `- ${type}: ${data.count} meals`).join('\n')}
 
-        ${keywordsStr}
+${keywordsStr}
 
-        User Profile:
-        - Diet: ${userPreferences?.dietaryType || 'Any'}
-        - Weight Goal: ${weightGoalContext}
-        - Daily Calorie Target: ${dailyCalories} kcal
-        - Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
-        - Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
-        - Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
-        - Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
-        - Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
+User Profile:
+- Diet: ${userPreferences?.dietaryType || 'Any'}
+- Weight Goal: ${weightGoalContext}
+- Daily Calorie Target: ${dailyCalories} kcal
+- Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
+- Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
+- Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
+- Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
+- Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
 
-        CRITICAL INSTRUCTIONS:
-        1. For EACH unique meal type requested, provide ONE single recipe idea.
-        2. The user will cook this ONE recipe in bulk.
-        3. ${regenInstruction}
-        4. Tailor calories to support the user's weight goal (${weightGoalContext}).
-        5. Return a valid JSON array of objects.
-        6. Include an estimate of calories per serving and a short string of key ingredients.
+${getRegionContext(userPreferences?.region)}
+${getBudgetContext(userPreferences?.budget)}
+${INGREDIENT_INSTRUCTION}
+${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
 
-        Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
-        [
-            {
-                "type": "lunch", // Use the EXACT key provided in the request (e.g. "lunch" or "lunch_1")
-                "name": "Meal Name",
-                "description": "Brief description of this bulk meal prep dish",
-                "emoji": "🍲 ", // Only one most fitting
-                "servingsRequired": 3, // The number of meals requested for this type
-                "calories": 550, // Estimate per serving
-                "keyIngredients": "Chicken, Rice, Broccoli"
-            }
-        ]
+CALORIE TARGETS PER MEAL TYPE (IMPORTANT - DO NOT EXCEED):
+${mealTypeCalorieTargets}
+
+CRITICAL INSTRUCTIONS:
+1. For EACH unique meal type requested, provide ONE single recipe idea.
+2. The user will cook this ONE recipe in bulk.
+3. ${regenInstruction}
+4. STRICTLY adhere to the calorie targets above. A lunch should be ~${getMealCalorieTarget('lunch', dailyCalories)} kcal, NOT 1000+ kcal.
+5. Tailor recipes to support the user's weight goal (${weightGoalContext}).
+6. Return a valid JSON array of objects.
+7. Include an estimate of calories per serving and a short string of key ingredients.
+
+Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
+[
+    {
+        "type": "lunch", // Use the EXACT key provided in the request (e.g. "lunch" or "lunch_1")
+        "name": "Meal Name",
+        "description": "Brief description of this bulk meal prep dish",
+        "emoji": "🍲 ", // Only one most fitting
+        "servingsRequired": 3, // The number of meals requested for this type
+        "calories": ${getMealCalorieTarget('lunch', dailyCalories)}, // Estimate per serving - MUST match target!
+        "keyIngredients": "Chicken, Rice, Broccoli"
+    }
+]
       `;
 
     } else if (context && mode !== 'recalculate') {
@@ -277,53 +388,79 @@ export async function POST(req: Request) {
       const userWeightGoal = userPreferences?.weightGoal as string;
       const weightGoalContext = userWeightGoal ? weightGoalMap[userWeightGoal] || 'balanced meals' : 'balanced meals';
 
+      // Determine calorie target based on meal type from the idea or default
+      const dailyCalories = userPreferences?.calorieGoal || 2000;
+      const mealType = mealIdea?.type || 'lunch';
+      const targetCalories = getMealCalorieTarget(mealType, dailyCalories);
+
       systemPrompt = `
-        You are a professional chef and nutritionist. Create a detailed meal recipe based on the user's request: "${generationPrompt}".
-        
-        User Profile:
-        - Diet: ${userPreferences?.dietaryType || 'Any'}
-        - Weight Goal: ${weightGoalContext}
-        - Daily Calorie Target: ${userPreferences?.calorieGoal || 2000} kcal
-        - Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
-        - Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
-        - Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
-        - Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
-        - Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
-        - Servings: ${userPreferences?.portions || 2}
-        - Units: ${userPreferences?.units || 'metric'}
+You are a professional chef and nutritionist. Create a detailed meal recipe based on the user's request: "${generationPrompt}".
 
-        IMPORTANT: 
-        1. Calculate macros (calories, protein, carbs, fats) PER SINGLE SERVING, not for the whole recipe.
-        2. Be REALISTIC and ACCURATE with macro estimation. Don't just guess generic numbers.
-        3. Tailor the recipe to support the user's weight goal (${weightGoalContext}).
-        4. Provide one relevant emoji that represents the dish.
-        5. Adjust ingredient amounts for ${userPreferences?.portions || 2} servings.
-        6. Use ${userPreferences?.units === 'imperial' ? 'imperial units (oz, cups, lb)' : 'metric units (g, ml, kg)'} for all measurements.
-        7. Keep complexity appropriate for ${userPreferences?.cookingSkill || 'intermediate'} skill level.
+User Profile:
+- Diet: ${userPreferences?.dietaryType || 'Any'}
+- Weight Goal: ${weightGoalContext}
+- Daily Calorie Target: ${dailyCalories} kcal
+- Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
+- Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
+- Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
+- Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
+- Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
+- Servings: ${userPreferences?.portions || 2}
+- Units: ${userPreferences?.units || 'metric'}
 
-        Return ONLY a valid JSON object with the following structure, no markdown formatting:
-        {
-            "name": "Recipe Name",
-            "description": "Brief description",
-            "emoji": "🍲", // Only one most fitting
-            "servings": 2,
-            "ingredients": [
-                { "name": "Ingredient 1", "amount": "100g" },
-                { "name": "Ingredient 2", "amount": "2 tbsp" }
-            ],
-            "instructions": ["Step 1", "Step 2", "..."],
-            "macros": {
-                "calories": 500,
-                "protein": 30,
-                "carbs": 45,
-                "fats": 20
-            },
-            "tags": ["Tag1", "Tag2"]
-        }
+${getRegionContext(userPreferences?.region)}
+${getBudgetContext(userPreferences?.budget)}
+${INGREDIENT_INSTRUCTION}
+${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
+
+TARGET CALORIES: This is a ${mealType}. Target approximately ${targetCalories} kcal per serving.
+
+IMPORTANT: 
+1. Calculate macros (calories, protein, carbs, fats) PER SINGLE SERVING, not for the whole recipe.
+2. Be REALISTIC and ACCURATE with macro estimation. Don't just guess generic numbers.
+3. TARGET ${targetCalories} kcal per serving for this ${mealType}. Do NOT significantly exceed this.
+4. Tailor the recipe to support the user's weight goal (${weightGoalContext}).
+5. Provide one relevant emoji that represents the dish.
+6. Adjust ingredient amounts for ${userPreferences?.portions || 2} servings.
+7. Use ${userPreferences?.units === 'imperial' ? 'imperial units (oz, cups, lb)' : 'metric units (g, ml, kg)'} for all measurements.
+8. Keep complexity appropriate for ${userPreferences?.cookingSkill || 'intermediate'} skill level.
+
+Return ONLY a valid JSON object with the following structure, no markdown formatting:
+{
+    "name": "Recipe Name",
+    "description": "Brief description",
+    "emoji": "🍲", // Only one most fitting
+    "servings": 2,
+    "ingredients": [
+        { "name": "Ingredient 1", "amount": "100g" },
+        { "name": "Ingredient 2", "amount": "2 tbsp" }
+    ],
+    "instructions": ["Step 1", "Step 2", "..."],
+    "macros": {
+        "calories": ${targetCalories},
+        "protein": 30,
+        "carbs": 45,
+        "fats": 20
+    },
+    "tags": ["Tag1", "Tag2"]
+}
         `;
     }
 
+    // === PROMPT LOGGING FOR PERFORMANCE TESTING ===
+    // Uncomment the line below to see the full prompt in server logs
+    console.log('\n=== AI PROMPT (Mode: ' + mode + ') ===');
+    console.log('Prompt length:', systemPrompt.length, 'characters');
+    console.log('--- START PROMPT ---');
+    console.log(systemPrompt);
+    console.log('--- END PROMPT ---\n');
+
+    const startTime = Date.now();
     const responseText = await generateMealSuggestion(systemPrompt);
+    const endTime = Date.now();
+
+    console.log(`=== AI RESPONSE TIME: ${endTime - startTime}ms (${((endTime - startTime) / 1000).toFixed(2)}s) ===`);
+    console.log('Response length:', responseText.length, 'characters\n');
 
     // Clean up the response if it contains markdown code blocks
     let cleanJson = responseText.replace(/```json/g, '').replace(/```/g, '').trim();

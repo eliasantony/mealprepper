@@ -4,18 +4,58 @@ import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserStore } from '@/store/userStore';
 import { useRouter } from 'next/navigation';
-import { ChevronRight, Check, ChefHat, Flame, Clock, Scale, Users, Wheat, Nut, Milk, Egg, Fish, Bean } from 'lucide-react';
+import { ChevronRight, Check, ChefHat, Flame, Clock, Scale, Users, Wheat, Nut, Milk, Egg, Fish, Bean, Utensils, Sunrise, Sun, Cookie, Moon, Settings } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveUserPreferences, updateUserData, saveOnboardingData } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
 
 const steps = [
-    { id: 'diet', title: 'Dietary Goals', description: 'What is your primary diet type?' },
-    { id: 'cuisines', title: 'Favorite Cuisines', description: 'What flavors do you love?' },
     { id: 'weight', title: 'Weight Goal', description: 'What do you want to achieve?' },
+    { id: 'diet', title: 'Dietary Goals', description: 'What is your primary diet type?' },
     { id: 'allergies', title: 'Allergies', description: 'Do you have any food allergies?' },
     { id: 'targets', title: 'Nutrition Targets', description: 'Set your daily goals.' },
+    { id: 'budget', title: 'Budget', description: 'What is your food budget preference?' },
+    { id: 'cuisines', title: 'Favorite Cuisines', description: 'What flavors do you love?' },
     { id: 'cooking', title: 'Cooking Style', description: 'How do you like to cook?' },
+];
+
+// Preset meal distribution templates
+const mealDistributionPresets = [
+    {
+        id: 'standard',
+        label: 'Standard',
+        icon: Scale,
+        description: 'Balanced meals throughout the day',
+        distribution: { breakfast: 0.20, lunch: 0.30, afternoon_snack: 0.10, dinner: 0.30, evening_snack: 0.10 }
+    },
+    {
+        id: 'big_breakfast',
+        label: 'Big Breakfast',
+        icon: Sunrise,
+        description: 'Front-loaded calories for energy',
+        distribution: { breakfast: 0.35, lunch: 0.25, afternoon_snack: 0.10, dinner: 0.25, evening_snack: 0.05 }
+    },
+    {
+        id: 'big_dinner',
+        label: 'Big Dinner',
+        icon: Moon,
+        description: 'Main meal in the evening',
+        distribution: { breakfast: 0.15, lunch: 0.25, afternoon_snack: 0.10, dinner: 0.40, evening_snack: 0.10 }
+    },
+    {
+        id: 'no_snacks',
+        label: 'No Snacks',
+        icon: Utensils,
+        description: '3 main meals only',
+        distribution: { breakfast: 0.30, lunch: 0.35, afternoon_snack: 0.00, dinner: 0.35, evening_snack: 0.00 }
+    },
+];
+
+const budgetOptions = [
+    { id: 'low', label: 'Budget', icon: '💰', description: 'Budget-friendly basics' },
+    { id: 'medium', label: 'Standard', icon: '🛒', description: 'Standard supermarket shopping' },
+    { id: 'high', label: 'Quality', icon: '🍽️', description: 'Quality ingredients' },
+    { id: 'premium', label: 'Premium', icon: '✨', description: 'Gourmet & specialty items' },
 ];
 
 const dietTypes = [
@@ -34,6 +74,7 @@ const weightGoals = [
     { id: 'gain', label: 'Gain Muscle', icon: '💪', description: 'Calorie surplus' },
 ];
 
+
 const commonAllergies = [
     { id: 'Nuts', label: 'Nuts', emoji: '🥜' },
     { id: 'Dairy', label: 'Dairy', emoji: '🥛' },
@@ -46,12 +87,16 @@ const commonAllergies = [
 const cuisineOptions = [
     { id: 'Italian', label: 'Italian', emoji: '🍝' },
     { id: 'Mexican', label: 'Mexican', emoji: '🌮' },
-    { id: 'Asian', label: 'Asian', emoji: '🍜' },
-    { id: 'Indian', label: 'Indian', emoji: '🍛' },
+    { id: 'Middle Eastern', label: 'Middle Eastern', emoji: '🥙' },
     { id: 'Mediterranean', label: 'Mediterranean', emoji: '🫒' },
     { id: 'American', label: 'American', emoji: '🍔' },
+    { id: 'Asian', label: 'Asian', emoji: '🍜' },
+    { id: 'Korean', label: 'Korean', emoji: '🥢' },
+    { id: 'Japanese', label: 'Japanese', emoji: '🍣' },
+    { id: 'Thai', label: 'Thai', emoji: '🍲' },
+    { id: 'Indian', label: 'Indian', emoji: '🍛' },
+    { id: 'Spanish', label: 'Spanish', emoji: '🥘' },
     { id: 'French', label: 'French', emoji: '🥐' },
-    { id: 'Middle Eastern', label: 'Middle Eastern', emoji: '🥙' },
 ];
 
 export const OnboardingWizard = () => {
@@ -90,6 +135,18 @@ export const OnboardingWizard = () => {
     const { user } = useAuth();
 
     const handleNext = async () => {
+        // Validate calorie distribution on Targets step (case 3)
+        if (currentStep === 3) {
+            const defaultDist = mealDistributionPresets[0].distribution;
+            const currentDist = preferences.calorieDistribution || defaultDist;
+            const total = Math.round((currentDist.breakfast + currentDist.lunch + currentDist.afternoon_snack + currentDist.dinner + currentDist.evening_snack) * 100);
+
+            if (total !== 100) {
+                alert(`Meal distribution must equal 100% (currently ${total}%)`);
+                return;
+            }
+        }
+
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
@@ -118,61 +175,7 @@ export const OnboardingWizard = () => {
 
     const renderStepContent = () => {
         switch (currentStep) {
-            case 0: // Diet
-                return (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        {dietTypes.map((diet) => (
-                            <button
-                                key={diet.id}
-                                onClick={() => setPreferences({ dietaryType: diet.id })}
-                                className={cn(
-                                    "p-6 rounded-2xl border-2 text-left transition-all hover:scale-[1.02]",
-                                    preferences.dietaryType === diet.id
-                                        ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
-                                        : "border-border hover:border-orange-500/50 bg-card"
-                                )}
-                            >
-                                <div className="text-4xl mb-3">{diet.icon}</div>
-                                <h3 className="font-semibold text-lg">{diet.label}</h3>
-                                <p className="text-sm text-muted-foreground">{diet.description}</p>
-                            </button>
-                        ))}
-
-                    </div >
-                );
-            case 1: // Cuisines
-                return (
-                    <div className="space-y-4">
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
-                            {cuisineOptions.map((cuisine) => {
-                                const isSelected = preferences.cuisines?.includes(cuisine.id);
-                                return (
-                                    <button
-                                        key={cuisine.id}
-                                        onClick={() => {
-                                            const currentCuisines = preferences.cuisines || [];
-                                            const newCuisines = isSelected
-                                                ? currentCuisines.filter(c => c !== cuisine.id)
-                                                : [...currentCuisines, cuisine.id];
-                                            setPreferences({ cuisines: newCuisines });
-                                        }}
-                                        className={cn(
-                                            "flex items-center gap-3 p-4 rounded-xl border transition-all text-left",
-                                            isSelected
-                                                ? "bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400 shadow-sm"
-                                                : "bg-card border-border hover:border-orange-500/50"
-                                        )}
-                                    >
-                                        <div className="text-2xl">{cuisine.emoji}</div>
-                                        <span className="font-medium">{cuisine.label}</span>
-                                        {isSelected && <Check className="w-4 h-4 text-orange-500 ml-auto" />}
-                                    </button>
-                                );
-                            })}
-                        </div>
-                    </div>
-                );
-            case 2: // Weight Goal
+            case 0: // Weight Goal
                 return (
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                         {weightGoals.map((goal) => (
@@ -193,7 +196,28 @@ export const OnboardingWizard = () => {
                         ))}
                     </div>
                 );
-            case 3: // Allergies
+            case 1: // Diet
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {dietTypes.map((diet) => (
+                            <button
+                                key={diet.id}
+                                onClick={() => setPreferences({ dietaryType: diet.id })}
+                                className={cn(
+                                    "p-6 rounded-2xl border-2 text-left transition-all hover:scale-[1.02]",
+                                    preferences.dietaryType === diet.id
+                                        ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
+                                        : "border-border hover:border-orange-500/50 bg-card"
+                                )}
+                            >
+                                <div className="text-4xl mb-3">{diet.icon}</div>
+                                <h3 className="font-semibold text-lg">{diet.label}</h3>
+                                <p className="text-sm text-muted-foreground">{diet.description}</p>
+                            </button>
+                        ))}
+                    </div>
+                );
+            case 2: // Allergies
                 return (
                     <div className="space-y-4">
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -215,9 +239,7 @@ export const OnboardingWizard = () => {
                                                 : "bg-card border-border hover:border-orange-500/50"
                                         )}
                                     >
-                                        <div className="text-2xl">
-                                            {allergy.emoji}
-                                        </div>
+                                        <div className="text-2xl">{allergy.emoji}</div>
                                         <span className="font-medium flex-1">{allergy.label}</span>
                                         {isSelected && <Check className="w-5 h-5 text-orange-500" />}
                                     </button>
@@ -232,7 +254,7 @@ export const OnboardingWizard = () => {
                         )}
                     </div>
                 );
-            case 4: // Targets
+            case 3: // Targets (Nutrition + Meal Distribution)
                 return (
                     <div className="space-y-8">
                         <div className="space-y-4">
@@ -277,9 +299,187 @@ export const OnboardingWizard = () => {
                                 *Macros are automatically adjusted based on your goal ({preferences.weightGoal}) and diet ({preferences.dietaryType}).
                             </p>
                         </div>
+
+                        {/* Meal Distribution */}
+                        <div className="space-y-4">
+                            <h3 className="font-medium flex items-center gap-2">
+                                <Utensils className="w-4 h-4 text-orange-500" />
+                                Meal Distribution
+                            </h3>
+
+                            {/* Preset Options - styled like budget cards */}
+                            <div className="grid grid-cols-2 gap-3">
+                                {mealDistributionPresets.map((preset) => {
+                                    const currentDist = preferences.calorieDistribution || mealDistributionPresets[0].distribution;
+                                    const isSelected =
+                                        Math.abs(currentDist.breakfast - preset.distribution.breakfast) < 0.01 &&
+                                        Math.abs(currentDist.lunch - preset.distribution.lunch) < 0.01 &&
+                                        Math.abs(currentDist.dinner - preset.distribution.dinner) < 0.01;
+
+                                    return (
+                                        <button
+                                            key={preset.id}
+                                            onClick={() => setPreferences({ calorieDistribution: preset.distribution })}
+                                            className={cn(
+                                                "p-4 rounded-2xl border-2 text-left transition-all hover:scale-[1.02]",
+                                                isSelected
+                                                    ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
+                                                    : "border-border hover:border-orange-500/50 bg-card"
+                                            )}
+                                        >
+                                            <preset.icon className="w-6 h-6 text-orange-500 mb-2" />
+                                            <h4 className="font-semibold">{preset.label}</h4>
+                                            <p className="text-xs text-muted-foreground mb-2">{preset.description}</p>
+                                            <p className="text-xs text-muted-foreground">
+                                                {Math.round(preset.distribution.breakfast * 100)}% • {Math.round(preset.distribution.lunch * 100)}% • {Math.round(preset.distribution.dinner * 100)}%
+                                            </p>
+                                        </button>
+                                    );
+                                })}
+                            </div>
+
+                            {/* Custom option */}
+                            {(() => {
+                                const currentDist = preferences.calorieDistribution || mealDistributionPresets[0].distribution;
+                                const isCustom = !mealDistributionPresets.some(preset =>
+                                    Math.abs(currentDist.breakfast - preset.distribution.breakfast) < 0.01 &&
+                                    Math.abs(currentDist.lunch - preset.distribution.lunch) < 0.01 &&
+                                    Math.abs(currentDist.dinner - preset.distribution.dinner) < 0.01
+                                );
+                                const total = Math.round((currentDist.breakfast + currentDist.lunch + currentDist.afternoon_snack + currentDist.dinner + currentDist.evening_snack) * 100);
+
+                                const mealTypes = [
+                                    { key: 'breakfast', label: 'Breakfast', Icon: Sunrise },
+                                    { key: 'lunch', label: 'Lunch', Icon: Sun },
+                                    { key: 'afternoon_snack', label: 'Snack', Icon: Cookie },
+                                    { key: 'dinner', label: 'Dinner', Icon: Moon },
+                                    { key: 'evening_snack', label: 'Evening', Icon: Moon },
+                                ];
+
+                                return (
+                                    <div className={cn(
+                                        "p-4 rounded-2xl border-2 transition-all",
+                                        isCustom
+                                            ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
+                                            : "border-border bg-card"
+                                    )}>
+                                        <div className="flex items-center justify-between mb-3">
+                                            <div className="flex items-center gap-2">
+                                                <Settings className="w-5 h-5 text-orange-500" />
+                                                <div>
+                                                    <h4 className="font-semibold">Custom</h4>
+                                                    <p className="text-xs text-muted-foreground">Set your own distribution</p>
+                                                </div>
+                                            </div>
+                                            <div className={cn(
+                                                "px-3 py-1 rounded-full text-sm font-bold",
+                                                total === 100
+                                                    ? "bg-green-500/20 text-green-500"
+                                                    : "bg-red-500/20 text-red-500"
+                                            )}>
+                                                {total}%
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-3">
+                                            {mealTypes.map((meal) => {
+                                                const value = Math.round(currentDist[meal.key as keyof typeof currentDist] * 100);
+                                                const kcal = Math.round(preferences.calorieGoal * value / 100);
+                                                return (
+                                                    <div key={meal.key} className="space-y-1">
+                                                        <div className="flex justify-between items-center text-sm">
+                                                            <span className="flex items-center gap-2">
+                                                                <meal.Icon className="w-4 h-4 text-muted-foreground" />
+                                                                <span className="font-medium">{meal.label}</span>
+                                                            </span>
+                                                            <span>
+                                                                <span className="font-bold text-orange-500">{value}%</span>
+                                                                <span className="text-muted-foreground text-xs ml-1">({kcal} kcal)</span>
+                                                            </span>
+                                                        </div>
+                                                        <input
+                                                            type="range"
+                                                            min="0"
+                                                            max="50"
+                                                            step="5"
+                                                            value={value}
+                                                            onChange={(e) => {
+                                                                const newDist = { ...currentDist };
+                                                                newDist[meal.key as keyof typeof newDist] = parseInt(e.target.value) / 100;
+                                                                setPreferences({ calorieDistribution: newDist });
+                                                            }}
+                                                            className="w-full h-2 bg-secondary rounded-lg appearance-none cursor-pointer accent-orange-500"
+                                                        />
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
+
+                                        {total !== 100 && (
+                                            <p className="text-xs text-red-500 mt-3 text-center">
+                                                ⚠️ Total must equal 100% to continue (currently {total}%)
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })()}
+                        </div>
                     </div>
                 );
-            case 5: // Cooking
+            case 4: // Budget
+                return (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {budgetOptions.map((budget) => (
+                            <button
+                                key={budget.id}
+                                onClick={() => setPreferences({ budget: budget.id as any })}
+                                className={cn(
+                                    "p-6 rounded-2xl border-2 text-left transition-all hover:scale-[1.02]",
+                                    preferences.budget === budget.id
+                                        ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
+                                        : "border-border hover:border-orange-500/50 bg-card"
+                                )}
+                            >
+                                <div className="text-4xl mb-3">{budget.icon}</div>
+                                <h3 className="font-semibold text-lg">{budget.label}</h3>
+                                <p className="text-sm text-muted-foreground">{budget.description}</p>
+                            </button>
+                        ))}
+                    </div>
+                );
+            case 5: // Cuisines
+                return (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                            {cuisineOptions.map((cuisine) => {
+                                const isSelected = preferences.cuisines?.includes(cuisine.id);
+                                return (
+                                    <button
+                                        key={cuisine.id}
+                                        onClick={() => {
+                                            const currentCuisines = preferences.cuisines || [];
+                                            const newCuisines = isSelected
+                                                ? currentCuisines.filter(c => c !== cuisine.id)
+                                                : [...currentCuisines, cuisine.id];
+                                            setPreferences({ cuisines: newCuisines });
+                                        }}
+                                        className={cn(
+                                            "flex items-center gap-3 p-4 rounded-xl border transition-all text-left",
+                                            isSelected
+                                                ? "bg-orange-500/10 border-orange-500 text-orange-700 dark:text-orange-400 shadow-sm"
+                                                : "bg-card border-border hover:border-orange-500/50"
+                                        )}
+                                    >
+                                        <div className="text-2xl">{cuisine.emoji}</div>
+                                        <span className="font-medium">{cuisine.label}</span>
+                                        {isSelected && <Check className="w-4 h-4 text-orange-500 ml-auto" />}
+                                    </button>
+                                );
+                            })}
+                        </div>
+                    </div>
+                );
+            case 6: // Cooking
                 return (
                     <div className="space-y-8">
                         <div className="space-y-4">

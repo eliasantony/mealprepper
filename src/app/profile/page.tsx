@@ -10,7 +10,7 @@ import { getAiUsageRemaining } from '@/services/firestoreService';
 
 export default function ProfilePage() {
     const { user, signInWithGoogle, logout } = useAuth();
-    const { preferences } = useUserStore();
+    const { preferences, setPreferences } = useUserStore();
     const [isFeedbackOpen, setIsFeedbackOpen] = useState(false);
     const [aiUsage, setAiUsage] = useState({ used: 0, remaining: 20, limit: 20 });
 
@@ -192,6 +192,10 @@ export default function ProfilePage() {
                     <div className="glass-card p-4 rounded-xl">
                         <div className="text-sm text-muted-foreground mb-1">Portions</div>
                         <div className="font-medium">{preferences.portions} people</div>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Budget</div>
+                        <div className="font-medium capitalize">{preferences.budget || 'Medium'}</div>
                     </div>
                 </div>
             </section>
