@@ -3,6 +3,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { auth } from '@/lib/firebase-admin';
 import { checkAndIncrementAiUsage } from '@/lib/rateLimiter';
+import { sanitizeUserPreference, containsInjectionAttempt } from '@/lib/sanitizeInput';
 
 // Define Validation Schemas
 const UserPreferencesSchema = z.object({
@@ -164,14 +165,23 @@ INGREDIENT GUIDELINES:
 - Stick to staples found in any standard supermarket.
 - Use simple ingredient names (e.g., "salt" not "Himalayan pink salt", "olive oil" not "extra virgin cold-pressed olive oil").`;
 
-    // Taste profile and notes context
+    // Taste profile and notes context - WITH SANITIZATION
     const getTasteProfileContext = (tasteProfile?: string, additionalNotes?: string): string => {
-      let context = '';
-      if (tasteProfile && tasteProfile.trim()) {
-        context += `\nTASTE PROFILE: ${tasteProfile}`;
+      // Log potential injection attempts for monitoring
+      if (containsInjectionAttempt(tasteProfile) || containsInjectionAttempt(additionalNotes)) {
+        console.warn('[SECURITY] Potential prompt injection attempt detected in user preferences');
       }
-      if (additionalNotes && additionalNotes.trim()) {
-        context += `\nUSER NOTES: ${additionalNotes}`;
+
+      // Sanitize inputs to prevent prompt injection
+      const safeTasteProfile = sanitizeUserPreference(tasteProfile);
+      const safeAdditionalNotes = sanitizeUserPreference(additionalNotes);
+
+      let context = '';
+      if (safeTasteProfile) {
+        context += `\nTASTE PROFILE: ${safeTasteProfile}`;
+      }
+      if (safeAdditionalNotes) {
+        context += `\nUSER NOTES: ${safeAdditionalNotes}`;
       }
       return context;
     };

@@ -47,7 +47,7 @@ export default function ProfilePage() {
                                 )}
                                 <div>
                                     <h3 className="font-medium">{user.displayName || 'User'}</h3>
-                                    <p className="text-sm text-muted-foreground">{user.email}</p>
+                                    <p className="text-sm text-muted-foreground truncate max-w-[200px]">{user.email}</p>
                                 </div>
                             </div>
                             <button
@@ -162,27 +162,31 @@ export default function ProfilePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="glass-card p-4 rounded-xl">
-                        <div className="text-sm text-muted-foreground mb-1">Diet Type</div>
-                        <div className="font-medium capitalize">{preferences.dietaryType}</div>
-                    </div>
-                    <div className="glass-card p-4 rounded-xl">
                         <div className="text-sm text-muted-foreground mb-1">Weight Goal</div>
                         <div className="font-medium capitalize">{preferences.weightGoal}</div>
                     </div>
                     <div className="glass-card p-4 rounded-xl">
-                        <div className="text-sm text-muted-foreground mb-1">Cuisines</div>
-                        <div className="font-medium">
-                            {preferences.cuisines?.length > 0 ? preferences.cuisines.join(', ') : 'Any'}
-                        </div>
-                    </div>
-                    <div className="glass-card p-4 rounded-xl">
-                        <div className="text-sm text-muted-foreground mb-1">Daily Calories</div>
-                        <div className="font-medium">{preferences.calorieGoal} kcal</div>
+                        <div className="text-sm text-muted-foreground mb-1">Diet Type</div>
+                        <div className="font-medium capitalize">{preferences.dietaryType}</div>
                     </div>
                     <div className="glass-card p-4 rounded-xl">
                         <div className="text-sm text-muted-foreground mb-1">Allergies</div>
                         <div className="font-medium">
                             {preferences.allergies.length > 0 ? preferences.allergies.join(', ') : 'None'}
+                        </div>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Daily Calories</div>
+                        <div className="font-medium">{preferences.calorieGoal} kcal</div> {/* TODO: Add distribution */}
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Budget</div>
+                        <div className="font-medium capitalize">{preferences.budget}</div>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Cuisines</div>
+                        <div className="font-medium">
+                            {preferences.cuisines?.length > 0 ? preferences.cuisines.join(', ') : 'Any'}
                         </div>
                     </div>
                     <div className="glass-card p-4 rounded-xl">
@@ -194,8 +198,12 @@ export default function ProfilePage() {
                         <div className="font-medium">{preferences.portions} people</div>
                     </div>
                     <div className="glass-card p-4 rounded-xl">
-                        <div className="text-sm text-muted-foreground mb-1">Budget</div>
-                        <div className="font-medium capitalize">{preferences.budget || 'Medium'}</div>
+                        <div className="text-sm text-muted-foreground mb-1">Max. Prep Time</div>
+                        <div className="font-medium">{preferences.cookingTime} minutes</div>
+                    </div>
+                    <div className="glass-card p-4 rounded-xl">
+                        <div className="text-sm text-muted-foreground mb-1">Additional Notes</div>
+                        <div className="font-medium">{preferences.additionalNotes}</div>
                     </div>
                 </div>
             </section>

@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef, useState } from 'react';
-import { Trash2, HardDrive, Moon, Sun, Laptop, AlertTriangle, Scale, Bell, Globe, MessageSquare } from 'lucide-react';
+import { Trash2, HardDrive, Moon, Sun, Laptop, AlertTriangle, Scale, Bell, Globe } from 'lucide-react';
 import { NotificationPermission } from '@/components/NotificationPermission';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
@@ -101,41 +101,6 @@ export default function SettingsPage() {
                 </div>
             </section>
 
-            {/* AI Preferences */}
-            <section className="space-y-4">
-                <h2 className="text-xl font-semibold flex items-center gap-2">
-                    <MessageSquare className="w-5 h-5 text-orange-500" />
-                    AI Preferences
-                </h2>
-                <div className="glass-card p-6 rounded-2xl space-y-6">
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Taste Profile</label>
-                        <p className="text-xs text-muted-foreground">
-                            Describe your taste preferences to get better meal suggestions.
-                        </p>
-                        <textarea
-                            value={preferences.tasteProfile || ''}
-                            onChange={(e) => setPreferences({ tasteProfile: e.target.value })}
-                            placeholder="e.g., I love spicy food, prefer Mediterranean flavors, enjoy creamy sauces, don't like too sweet dishes..."
-                            className="w-full p-3 bg-secondary/50 border border-border rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                            rows={3}
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <label className="text-sm font-medium">Additional Notes for AI</label>
-                        <p className="text-xs text-muted-foreground">
-                            Any other preferences the AI should know about.
-                        </p>
-                        <textarea
-                            value={preferences.additionalNotes || ''}
-                            onChange={(e) => setPreferences({ additionalNotes: e.target.value })}
-                            placeholder="e.g., I'm intermittent fasting, prefer quick meals on weekdays, like meal prep friendly recipes..."
-                            className="w-full p-3 bg-secondary/50 border border-border rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50"
-                            rows={3}
-                        />
-                    </div>
-                </div>
-            </section>
 
             {/* Appearance */}
             <section className="space-y-4">

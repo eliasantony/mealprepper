@@ -3,11 +3,12 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useUserStore } from '@/store/userStore';
-import { useRouter } from 'next/navigation';
-import { ChevronRight, Check, ChefHat, Flame, Clock, Scale, Users, Wheat, Nut, Milk, Egg, Fish, Bean, Utensils, Sunrise, Sun, Cookie, Moon, Settings } from 'lucide-react';
+import { useRouter, useSearchParams } from 'next/navigation';
+import { ChevronRight, Check, ChefHat, Flame, Clock, Scale, Users, Wheat, Nut, Milk, Egg, Fish, Bean, Utensils, Sunrise, Sun, Cookie, Moon, Settings, MessageSquare, Sparkles } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { saveUserPreferences, updateUserData, saveOnboardingData } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
+import { toast } from 'sonner';
 
 const steps = [
     { id: 'weight', title: 'Weight Goal', description: 'What do you want to achieve?' },
@@ -17,6 +18,7 @@ const steps = [
     { id: 'budget', title: 'Budget', description: 'What is your food budget preference?' },
     { id: 'cuisines', title: 'Favorite Cuisines', description: 'What flavors do you love?' },
     { id: 'cooking', title: 'Cooking Style', description: 'How do you like to cook?' },
+    { id: 'finetune', title: 'Almost Done!', description: 'Anything else we should know?' },
 ];
 
 // Preset meal distribution templates
@@ -101,8 +103,11 @@ const cuisineOptions = [
 
 export const OnboardingWizard = () => {
     const [currentStep, setCurrentStep] = useState(0);
+    const [isCompleting, setIsCompleting] = useState(false);
     const { preferences, setPreferences, completeOnboarding } = useUserStore();
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const isEditMode = searchParams.get('mode') === 'edit';
 
     // Dynamic Macro Calculation
     useEffect(() => {
@@ -150,20 +155,29 @@ export const OnboardingWizard = () => {
         if (currentStep < steps.length - 1) {
             setCurrentStep(currentStep + 1);
         } else {
+            // Save preferences
             if (user) {
                 try {
-                    console.log("OnboardingWizard: Saving preferences and completion status for user", user.uid);
+                    console.log("OnboardingWizard: Saving preferences for user", user.uid);
                     await saveOnboardingData(user.uid, preferences);
                     console.log("OnboardingWizard: Save successful");
                 } catch (error) {
                     console.error("Failed to save preferences:", error);
-                    // Continue anyway to let user use the app
                 }
-            } else {
-                console.log("OnboardingWizard: No user found, skipping save");
             }
-            completeOnboarding();
-            router.push('/');
+
+            if (isEditMode) {
+                // Edit mode: No animation, go back to profile with toast
+                toast.success('Preferences updated!');
+                router.push('/profile');
+            } else {
+                // First-time: Show completion animation
+                setIsCompleting(true);
+                setTimeout(() => {
+                    completeOnboarding();
+                    router.push('/');
+                }, 2000);
+            }
         }
     };
 
@@ -434,15 +448,17 @@ export const OnboardingWizard = () => {
                                 key={budget.id}
                                 onClick={() => setPreferences({ budget: budget.id as any })}
                                 className={cn(
-                                    "p-6 rounded-2xl border-2 text-left transition-all hover:scale-[1.02]",
+                                    "p-6 rounded-2xl border-2 text-left transition-all hover:scale-[1.02] flex items-center gap-4",
                                     preferences.budget === budget.id
                                         ? "border-orange-500 bg-orange-500/5 ring-2 ring-orange-500/20"
                                         : "border-border hover:border-orange-500/50 bg-card"
                                 )}
                             >
-                                <div className="text-4xl mb-3">{budget.icon}</div>
-                                <h3 className="font-semibold text-lg">{budget.label}</h3>
-                                <p className="text-sm text-muted-foreground">{budget.description}</p>
+                                <div className="text-4xl shrink-0">{budget.icon}</div>
+                                <div>
+                                    <h3 className="font-semibold text-lg leading-tight">{budget.label}</h3>
+                                    <p className="text-sm text-muted-foreground">{budget.description}</p>
+                                </div>
                             </button>
                         ))}
                     </div>
@@ -553,10 +569,75 @@ export const OnboardingWizard = () => {
                         </div>
                     </div>
                 );
+            case 7: // Almost Done
+                return (
+                    <div className="space-y-6">
+                        {/* Optional note - single simple field */}
+                        <div className="space-y-6 py-6">
+                            <div className="flex items-center justify-center gap-2">
+                                <span className="text-sm text-muted-foreground">Want to add anything else?</span>
+                                <span className="text-xs bg-secondary text-muted-foreground px-2 py-0.5 rounded">Optional</span>
+                            </div>
+                            <textarea
+                                value={preferences.additionalNotes || ''}
+                                onChange={(e) => setPreferences({ additionalNotes: e.target.value })}
+                                placeholder="e.g., I love spicy food, hate cilantro, prefer quick meals on weekdays..."
+                                className="w-full p-4 bg-card border border-border rounded-2xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50 min-h-[140px]"
+                                maxLength={500}
+                            />
+                        </div>
+                    </div>
+                );
             default:
                 return null;
         }
     };
+
+    // Completion animation overlay
+    if (isCompleting) {
+        return (
+            <div className="max-w-2xl mx-auto flex items-center justify-center min-h-[400px]">
+                <motion.div
+                    initial={{ opacity: 0, scale: 0.8 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    transition={{ duration: 0.5, ease: "easeOut" }}
+                    className="text-center space-y-6"
+                >
+                    <motion.div
+                        initial={{ scale: 0 }}
+                        animate={{ scale: 1 }}
+                        transition={{ delay: 0.2, type: "spring", stiffness: 200 }}
+                        className="w-20 h-20 bg-green-500/10 rounded-full flex items-center justify-center mx-auto"
+                    >
+                        <motion.div
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{ delay: 0.5 }}
+                        >
+                            <Check className="w-10 h-10 text-green-500" />
+                        </motion.div>
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: 0.6 }}
+                    >
+                        <h2 className="text-2xl font-bold mb-2">You're all set!</h2>
+                        <p className="text-muted-foreground">Let's start creating amazing meals for you.</p>
+                    </motion.div>
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: 1 }}
+                        className="flex items-center justify-center gap-2 text-sm text-muted-foreground"
+                    >
+                        <div className="w-4 h-4 border-2 border-orange-500 border-t-transparent rounded-full animate-spin" />
+                        <span>Taking you to the app...</span>
+                    </motion.div>
+                </motion.div>
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-2xl mx-auto">
