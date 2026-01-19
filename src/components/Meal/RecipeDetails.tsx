@@ -9,6 +9,23 @@ import { useAuth } from '@/context/AuthContext';
 import { saveMealToFirestore } from '@/services/firestoreService';
 import { cn } from '@/lib/utils';
 
+/**
+ * Parse markdown-style bold text (**text**) and return React elements
+ * Also strips leading numbers/bullets that might be duplicated
+ */
+function parseMarkdownBold(text: string): React.ReactNode {
+    // Strip leading numbers like "1. ", "1) ", "Step 1: ", etc.
+    const cleanedText = text.replace(/^(\d+[\.\)]\s*|\*\s*|Step\s+\d+[:\-]?\s*)/i, '');
+
+    const parts = cleanedText.split(/(\*\*[^*]+\*\*)/g);
+    return parts.map((part, i) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            return <strong key={i} className="font-semibold text-foreground">{part.slice(2, -2)}</strong>;
+        }
+        return part;
+    });
+}
+
 interface RecipeDetailsProps {
     meal: Meal | null;
     onClose: () => void;
@@ -654,7 +671,7 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect, selectButtonL
                                         displayMeal.instructions?.map((step, i) => (
                                             <li key={i} className="flex gap-3 text-sm text-muted-foreground">
                                                 <span className="font-bold text-muted-foreground/50">{i + 1}.</span>
-                                                <span>{step}</span>
+                                                <span>{parseMarkdownBold(step)}</span>
                                             </li>
                                         ))
                                     )}

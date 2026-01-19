@@ -1,6 +1,12 @@
-import { initializeApp, getApps, getApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { initializeApp, getApps, getApp, FirebaseApp } from 'firebase/app';
+import { getAuth, Auth } from 'firebase/auth';
+import {
+    getFirestore,
+    initializeFirestore,
+    persistentLocalCache,
+    persistentMultipleTabManager,
+    Firestore
+} from 'firebase/firestore';
 
 const firebaseConfig = {
     apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
@@ -12,8 +18,27 @@ const firebaseConfig = {
 };
 
 // Initialize Firebase
-const app = !getApps().length ? initializeApp(firebaseConfig) : getApp();
-const auth = getAuth(app);
-const db = getFirestore(app);
+const app: FirebaseApp = !getApps().length ? initializeApp(firebaseConfig) : getApp();
+const auth: Auth = getAuth(app);
+
+// Initialize Firestore with persistent cache (new API, replaces deprecated enableIndexedDbPersistence)
+let db: Firestore;
+
+if (typeof window !== 'undefined') {
+    // Client-side: use persistent cache with multi-tab support
+    try {
+        db = initializeFirestore(app, {
+            localCache: persistentLocalCache({
+                tabManager: persistentMultipleTabManager(),
+            }),
+        });
+    } catch {
+        // Firestore might already be initialized (hot reload), use getFirestore
+        db = getFirestore(app);
+    }
+} else {
+    // Server-side: use default Firestore
+    db = getFirestore(app);
+}
 
 export { auth, db };

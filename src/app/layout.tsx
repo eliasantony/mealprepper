@@ -7,6 +7,8 @@ import { MainLayout } from "@/components/Layout/MainLayout";
 import { ThemeProvider } from "@/components/ThemeProvider";
 import { AuthProvider } from "@/context/AuthContext";
 import { AuthGuard } from "@/components/AuthGuard";
+import { InstallPrompt } from "@/components/InstallPrompt";
+import { NotificationPermission } from "@/components/NotificationPermission";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import clsx from "clsx";
@@ -17,6 +19,19 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "MealPrepper - AI Meal Planning",
   description: "Plan your weekly meals with the power of AI",
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "MealPrepper",
+  },
+  icons: {
+    apple: "/icons/apple-touch-icon.png",
+  },
+};
+
+export const viewport = {
+  themeColor: "#10b981",
 };
 
 export default function RootLayout({
@@ -43,6 +58,8 @@ export default function RootLayout({
             </React.Suspense>
           </AuthProvider>
           <Toaster />
+          <InstallPrompt />
+          <NotificationPermission />
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>

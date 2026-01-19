@@ -42,3 +42,7 @@ next-env.d.ts
 
 firestore.rules
 serviceAccountKey.json
+
+# PWA
+public/sw.js
+public/workbox-*.js

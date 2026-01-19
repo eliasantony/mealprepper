@@ -51,7 +51,7 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
             const body = {
                 prompt: idea ? '' : (mode === 'brainstorm' ? `${selectedMealType} ideas` : prompt),
                 userPreferences: preferences,
-                mode: idea ? 'generation' : mode,
+                mode: mode === 'brainstorm' && !idea ? 'brainstorm' : 'recipe',
                 mealIdea: idea,
                 keywords: mode === 'brainstorm' ? keywords : undefined,
                 timeLimit: mode === 'brainstorm' ? timeLimit : undefined
@@ -248,17 +248,13 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
                         <div className="mb-3">
                             <h3 className="font-medium text-orange-500">Generated Suggestion:</h3>
                         </div>
-                        <div onClick={() => setShowDetails(true)} className="cursor-pointer hover:opacity-90 transition-opacity">
-                            <MealCard meal={generatedMeal} />
-                        </div>
-
-                        <button
-                            onClick={() => setShowDetails(true)}
-                            className="w-full mt-3 py-2 bg-background text-orange-600 border border-orange-500/20 rounded-lg font-medium hover:bg-orange-500/5 transition-colors flex items-center justify-center gap-2"
-                        >
-                            <Sparkles className="w-4 h-4" />
-                            View Details & Adapt
-                        </button>
+                        <MealCard
+                            meal={generatedMeal}
+                            variant='expanded'
+                            hideHandle
+                            onSelect={onMealGenerated}
+                            selectButtonLabel={onMealGenerated ? "Save & Use" : undefined}
+                        />
                     </div>
                 </div>
             )}

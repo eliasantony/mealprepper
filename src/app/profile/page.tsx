@@ -117,7 +117,7 @@ export default function ProfilePage() {
                         </div>
                         <div>
                             <h3 className="font-medium">General Settings</h3>
-                            <p className="text-sm text-muted-foreground">Theme, data management</p>
+                            <p className="text-sm text-muted-foreground">Theme, Notifications, ...</p>
                         </div>
                     </div>
                     <ChevronRight className="w-5 h-5 text-muted-foreground group-hover:text-foreground transition-colors" />

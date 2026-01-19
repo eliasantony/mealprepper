@@ -96,9 +96,14 @@ export const AddMealModal = ({ isOpen, onClose, date, slotType }: AddMealModalPr
                                 ) : (
                                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                                         {savedMeals.map((meal, index) => (
-                                            <div key={`${meal.id}-${index}`} onClick={() => handleAddMeal(meal)} className="cursor-pointer">
-                                                <MealCard meal={meal} hideHandle />
-                                            </div>
+                                            <MealCard
+                                                key={`${meal.id}-${index}`}
+                                                meal={meal}
+                                                hideHandle
+                                                variant="expanded"
+                                                onSelect={handleAddMeal}
+                                                selectButtonLabel="Use Meal"
+                                            />
                                         ))}
                                     </div>
                                 )}

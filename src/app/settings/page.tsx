@@ -1,7 +1,8 @@
 "use client";
 
 import React from 'react';
-import { Trash2, HardDrive, Moon, Sun, Laptop, AlertTriangle, Scale } from 'lucide-react';
+import { Trash2, HardDrive, Moon, Sun, Laptop, AlertTriangle, Scale, Bell } from 'lucide-react';
+import { NotificationPermission } from '@/components/NotificationPermission';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
 import { useTheme } from 'next-themes';
@@ -107,6 +108,17 @@ export default function SettingsPage() {
                             <span className="font-medium">Imperial (oz, cups)</span>
                         </button>
                     </div>
+                </div>
+            </section>
+
+            {/* Notifications */}
+            <section className="space-y-4">
+                <h2 className="text-xl font-semibold flex items-center gap-2">
+                    <Bell className="w-5 h-5 text-orange-500" />
+                    Notifications
+                </h2>
+                <div className="glass-card rounded-2xl overflow-hidden">
+                    <NotificationPermission showInSettings />
                 </div>
             </section>
 

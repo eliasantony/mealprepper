@@ -4,6 +4,7 @@ import { Meal } from '@/types';
 import { cn } from '@/lib/utils';
 import { GripVertical, Flame, Droplets, Wheat, Dumbbell, Clock } from 'lucide-react';
 import { useMealStore } from '@/store/mealStore';
+import { RecipeDetails } from './RecipeDetails';
 
 interface MealCardProps {
     meal: Meal;
@@ -11,10 +12,15 @@ interface MealCardProps {
     onClick?: () => void;
     hideHandle?: boolean;
     variant?: 'compact' | 'expanded';
+    /** Called when user selects the meal (e.g., to add to slot) */
+    onSelect?: (meal: Meal) => void;
+    /** Custom label for the select button in RecipeDetails */
+    selectButtonLabel?: string;
 }
 
-export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'compact' }: MealCardProps) => {
+export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'compact', onSelect, selectButtonLabel }: MealCardProps) => {
     const setSelectedMeal = useMealStore((state) => state.setSelectedMeal);
+    const [showDetails, setShowDetails] = React.useState(false);
 
     const { attributes, listeners, setNodeRef, transform } = useDraggable({
         id: meal.id,
@@ -39,6 +45,7 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'comp
                 )}
                 onClick={() => {
                     if (onClick) onClick();
+                    else if (onSelect) setShowDetails(true);
                     else setSelectedMeal(meal);
                 }}
             >
@@ -109,6 +116,19 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'comp
                         </div>
                     )}
                 </div>
+
+                {/* RecipeDetails modal when onSelect is provided */}
+                {showDetails && onSelect && (
+                    <RecipeDetails
+                        meal={meal}
+                        onClose={() => setShowDetails(false)}
+                        onSelect={(selectedMeal) => {
+                            onSelect(selectedMeal);
+                            setShowDetails(false);
+                        }}
+                        selectButtonLabel={selectButtonLabel}
+                    />
+                )}
             </div>
         );
     }
@@ -127,6 +147,7 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'comp
             )}
             onClick={() => {
                 if (onClick) onClick();
+                else if (onSelect) setShowDetails(true);
                 else setSelectedMeal(meal);
             }}
         >
@@ -156,6 +177,19 @@ export const MealCard = ({ meal, isOverlay, onClick, hideHandle, variant = 'comp
                     </div>
                 )}
             </div>
+
+            {/* RecipeDetails modal when onSelect is provided */}
+            {showDetails && onSelect && (
+                <RecipeDetails
+                    meal={meal}
+                    onClose={() => setShowDetails(false)}
+                    onSelect={(selectedMeal) => {
+                        onSelect(selectedMeal);
+                        setShowDetails(false);
+                    }}
+                    selectButtonLabel={selectButtonLabel}
+                />
+            )}
         </div>
     );
 };
