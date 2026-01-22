@@ -18,7 +18,7 @@ interface PlanWeekModalProps {
 
 type SlotKey = string; // format: "YYYY-MM-DD|mealType"
 
-const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'snack-afternoon', 'dinner', 'snack-evening'];
+const MEAL_TYPES: MealType[] = ['breakfast', 'lunch', 'afternoon_snack', 'dinner', 'evening_snack'];
 
 interface GeneratedIdea {
     type: MealType;

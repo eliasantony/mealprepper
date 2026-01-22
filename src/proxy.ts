@@ -22,7 +22,7 @@ const tokenCache = new LRUCache<string, { count: number; expiresAt: number }>({
     ttl: RATES.AI.window,
 });
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
     const { pathname } = req.nextUrl;
 
     // Only apply to API routes
