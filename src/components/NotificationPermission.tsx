@@ -39,6 +39,7 @@ export function NotificationPermission({ showInSettings = false }: NotificationP
     const [isSupported, setIsSupported] = useState(true);
     const [preferences, setPreferences] = useState<NotificationPreferences>(defaultPreferences);
     const [isSaving, setIsSaving] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
 
     useEffect(() => {
         // Check initial permission status
@@ -151,6 +152,44 @@ export function NotificationPermission({ showInSettings = false }: NotificationP
         localStorage.setItem('notification-prompt-dismissed', 'true');
     };
 
+    const handleSendTestNotification = async () => {
+        const user = auth.currentUser;
+        if (!user) return;
+
+        setIsTesting(true);
+        try {
+            const idToken = await user.getIdToken();
+            const response = await fetch('/api/send-notification', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${idToken}`,
+                },
+                body: JSON.stringify({
+                    userId: user.uid,
+                    title: 'Test Notification 🍲',
+                    body: 'If you see this, FCM is working perfectly on your device!',
+                    url: '/dashboard',
+                    tag: 'test-notification',
+                }),
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                toast.success('Test notification sent!', {
+                    description: 'It may take a few seconds to arrive.',
+                });
+            } else {
+                throw new Error(data.error || 'Failed to send');
+            }
+        } catch (error) {
+            console.error('Error sending test notification:', error);
+            toast.error('Failed to send test notification');
+        } finally {
+            setIsTesting(false);
+        }
+    };
+
     // Settings view with preference toggles
     if (showInSettings) {
         return (
@@ -177,11 +216,15 @@ export function NotificationPermission({ showInSettings = false }: NotificationP
 
                     {isSupported && permissionStatus !== 'denied' && (
                         <button
-                            onClick={permissionStatus === 'granted' ? () => savePreferences({ enabled: !preferences.enabled }) : handleEnableNotifications}
+                            onClick={
+                                (permissionStatus === 'granted' && preferences.enabled)
+                                    ? () => savePreferences({ enabled: false })
+                                    : handleEnableNotifications
+                            }
                             disabled={isLoading || isSaving}
                             className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${preferences.enabled && permissionStatus === 'granted'
-                                    ? 'bg-primary/20 text-primary hover:bg-primary/30'
-                                    : 'bg-primary text-primary-foreground hover:bg-primary/90'
+                                ? 'bg-primary/20 text-primary hover:bg-primary/30'
+                                : 'bg-primary text-primary-foreground hover:bg-primary/90'
                                 }`}
                         >
                             {(isLoading || isSaving) && <Loader2 className="h-4 w-4 animate-spin inline mr-2" />}
@@ -256,6 +299,25 @@ export function NotificationPermission({ showInSettings = false }: NotificationP
                                 className="h-5 w-5 rounded border-border text-primary focus:ring-primary"
                             />
                         </label>
+
+                        {/* Test Notification Button */}
+                        <div className="pt-4 mt-4 border-t border-border/50">
+                            <button
+                                onClick={handleSendTestNotification}
+                                disabled={isTesting}
+                                className="w-full py-2.5 rounded-xl bg-primary/5 text-primary border border-primary/20 hover:bg-primary/10 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                            >
+                                {isTesting ? (
+                                    <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                    <Bell className="h-4 w-4" />
+                                )}
+                                Send Test Notification
+                            </button>
+                            <p className="mt-2 text-[11px] text-center text-muted-foreground">
+                                Test both foreground (while using app) and background (after closing app) notifications.
+                            </p>
+                        </div>
                     </div>
                 )}
 

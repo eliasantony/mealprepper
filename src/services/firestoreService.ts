@@ -150,10 +150,17 @@ export const getBookmarkedRecipes = async (userId: string): Promise<Meal[]> => {
                 const recipeDoc = await getDoc(doc(db, 'recipes', bookmark.recipeId));
                 if (recipeDoc.exists()) {
                     recipes.push({ ...recipeDoc.data() as Meal, bookmarkedAt: bookmark.savedAt });
+                } else {
+                    // Recipe was deleted - could automatically clean up here
+                    console.info(`Bookmarked recipe ${bookmark.recipeId} was deleted by its author.`);
                 }
-            } catch (error) {
-                console.warn(`Could not fetch bookmarked recipe ${bookmark.recipeId}:`, error);
-                // Continue with other bookmarks instead of failing entirely
+            } catch (error: any) {
+                if (error.code === 'permission-denied') {
+                    // This happens if the owner made the recipe private
+                    console.info(`Bookmarked recipe ${bookmark.recipeId} is no longer public.`);
+                } else {
+                    console.warn(`Could not fetch bookmarked recipe ${bookmark.recipeId}:`, error);
+                }
             }
         }
         return recipes;

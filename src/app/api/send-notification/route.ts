@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { firestore, messaging } from '@/lib/firebase-admin';
+import { firestore, messaging, auth } from '@/lib/firebase-admin';
 
 interface SendNotificationRequest {
     userId: string;
@@ -24,8 +24,27 @@ export async function POST(request: NextRequest) {
         const authHeader = request.headers.get('authorization');
         const apiKey = process.env.NOTIFICATION_API_KEY;
 
-        // Simple API key auth for server-to-server calls
-        if (apiKey && authHeader !== `Bearer ${apiKey}`) {
+        let isAuthenticated = false;
+        let authenticatedUserId: string | null = null;
+
+        // 1. Check for API key (Service-to-Service)
+        if (apiKey && authHeader === `Bearer ${apiKey}`) {
+            isAuthenticated = true;
+        }
+
+        // 2. Check for Firebase ID Token (Client-to-Service)
+        if (!isAuthenticated && authHeader?.startsWith('Bearer ') && auth) {
+            const token = authHeader.split('Bearer ')[1];
+            try {
+                const decodedToken = await auth.verifyIdToken(token);
+                authenticatedUserId = decodedToken.uid;
+                isAuthenticated = true;
+            } catch (error) {
+                console.error('Error verifying ID token:', error);
+            }
+        }
+
+        if (!isAuthenticated) {
             return NextResponse.json(
                 { error: 'Unauthorized' },
                 { status: 401 }
@@ -41,6 +60,14 @@ export async function POST(request: NextRequest) {
 
         const body: SendNotificationRequest = await request.json();
         const { userId, title, body: notificationBody, url, tag } = body;
+
+        // Security: If authenticated via Firebase, ensure user is sending to themselves
+        if (authenticatedUserId && authenticatedUserId !== userId) {
+            return NextResponse.json(
+                { error: 'Forbidden: You can only send notifications to yourself' },
+                { status: 403 }
+            );
+        }
 
         if (!userId || !title || !notificationBody) {
             return NextResponse.json(
@@ -140,5 +167,6 @@ export async function GET() {
         status: 'ok',
         messaging: !!messaging,
         firestore: !!firestore,
+        auth: !!auth,
     });
 }
