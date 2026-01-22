@@ -57,10 +57,10 @@ export default function RootLayout({
                 </MainLayout>
               </AuthGuard>
             </React.Suspense>
+            <InstallPrompt />
+            <NotificationPermission />
           </AuthProvider>
           <Toaster />
-          <InstallPrompt />
-          <NotificationPermission />
           <Analytics />
           <SpeedInsights />
         </ThemeProvider>

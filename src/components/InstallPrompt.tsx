@@ -3,6 +3,7 @@
 import { useState, useEffect } from "react";
 import { X, Download, Share } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/context/AuthContext";
 
 interface BeforeInstallPromptEvent extends Event {
     prompt: () => Promise<void>;
@@ -10,11 +11,18 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPrompt() {
+    const { user, loading } = useAuth();
     const [showPrompt, setShowPrompt] = useState(false);
     const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
     const [isIOS, setIsIOS] = useState(false);
 
     useEffect(() => {
+        // Only show prompt if user is logged in and not loading
+        if (loading || !user) {
+            setShowPrompt(false);
+            return;
+        }
+
         // Check if already installed (standalone mode or display-mode)
         const isStandalone =
             window.matchMedia("(display-mode: standalone)").matches ||
@@ -40,7 +48,8 @@ export function InstallPrompt() {
                 !/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent);
             if (isSafari) {
                 // Show after a delay
-                setTimeout(() => setShowPrompt(true), 5000);
+                const timer = setTimeout(() => setShowPrompt(true), 5000);
+                return () => clearTimeout(timer);
             }
             return; // Don't set up beforeinstallprompt listener on iOS
         }
@@ -58,7 +67,7 @@ export function InstallPrompt() {
         return () => {
             window.removeEventListener("beforeinstallprompt", handleBeforeInstall);
         };
-    }, []);
+    }, [user, loading]);
 
     const handleInstall = async () => {
         if (deferredPrompt) {
@@ -78,7 +87,7 @@ export function InstallPrompt() {
         }
     };
 
-    if (!showPrompt) return null;
+    if (!showPrompt || !user) return null;
 
     return (
         <AnimatePresence>
