@@ -1,4 +1,4 @@
-export type MealType = 'breakfast' | 'lunch' | 'snack-afternoon' | 'dinner' | 'snack-evening';
+export type MealType = 'breakfast' | 'lunch' | 'afternoon_snack' | 'dinner' | 'evening_snack';
 
 export interface Macros {
   calories: number;

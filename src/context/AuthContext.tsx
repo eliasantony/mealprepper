@@ -8,10 +8,12 @@ import {
     signOut,
     onAuthStateChanged
 } from 'firebase/auth';
-import { auth } from '@/lib/firebase';
+import { auth, db } from '@/lib/firebase';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { getUserData, getMyRecipes, getBookmarkedRecipes, getWeekPlan, saveWeekPlan } from '@/services/firestoreService';
 import { useUserStore } from '@/store/userStore';
 import { useMealStore } from '@/store/mealStore';
+import { Meal } from '@/types';
 
 interface AuthContextType {
     user: User | null;
@@ -35,7 +37,9 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     const { setPreferences, completeOnboarding, resetUser } = useUserStore();
 
     useEffect(() => {
-        const unsubscribe = onAuthStateChanged(auth, async (user) => {
+        let unsubscribeWeekPlan: (() => void) | undefined;
+
+        const unsubscribeAuth = onAuthStateChanged(auth, async (user) => {
             setUser(user);
             if (user) {
                 // Fetch user data from Firestore
@@ -50,11 +54,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         if (userData.hasCompletedOnboarding) {
                             console.log("AuthContext: Completing onboarding");
                             completeOnboarding();
-                        } else {
-                            console.log("AuthContext: hasCompletedOnboarding is false or missing");
                         }
-                    } else {
-                        console.log("AuthContext: No userData found");
                     }
 
                     // Fetch user's authored recipes
@@ -69,26 +69,66 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
                         useMealStore.getState().setBookmarkedRecipes(bookmarkedRecipes);
                     }
 
-                    // Fetch week plan (pass all available recipes to resolve recipe IDs)
-                    const allRecipes = [...myRecipes, ...bookmarkedRecipes];
-                    const weekPlan = await getWeekPlan(user.uid, allRecipes);
-                    if (weekPlan) {
-                        useMealStore.getState().setWeekPlan(weekPlan);
-                    }
+                    // REAL-TIME SYNC: Listen for user document changes (includes weekPlan, preferences, etc.)
+                    unsubscribeWeekPlan = onSnapshot(doc(db, 'users', user.uid), (snapshot) => {
+                        if (snapshot.exists()) {
+                            const data = snapshot.data();
+                            console.log("AuthContext: User document snapshot updated", data);
+
+                            // 1. Sync Onboarding & Preferences
+                            if (data.preferences) {
+                                useUserStore.getState().setPreferences(data.preferences);
+                            }
+                            if (data.hasCompletedOnboarding) {
+                                useUserStore.getState().completeOnboarding();
+                            }
+
+                            // 2. Sync Week Plan
+                            if (data.weekPlan) {
+                                // Re-fetch current recipes from store to ensure we have the latest list for resolution
+                                const currentSaved = useMealStore.getState().savedMeals;
+                                const currentBookmarks = useMealStore.getState().bookmarkedRecipes;
+                                const allRecipes = [...currentSaved, ...currentBookmarks];
+
+                                // Transform snapshot data back into full Meal objects using pre-loaded recipes
+                                const weekPlan: any = {};
+                                for (const [date, dayPlan] of Object.entries(data.weekPlan)) {
+                                    if (!dayPlan || typeof dayPlan !== 'object') continue;
+                                    const mealIds = (dayPlan as any).meals || {};
+                                    weekPlan[date] = { date: (dayPlan as any).date || date, meals: {} };
+
+                                    for (const [slot, mealId] of Object.entries(mealIds)) {
+                                        if (mealId) {
+                                            const recipe = allRecipes.find(r => r.id === mealId);
+                                            if (recipe) {
+                                                weekPlan[date].meals[slot] = recipe;
+                                            }
+                                        }
+                                    }
+                                }
+                                useMealStore.getState().setWeekPlan(weekPlan);
+                            }
+                        }
+                    });
+
                 } catch (error) {
                     console.error("Error fetching user data:", error);
                 }
             } else {
                 resetUser();
+                if (unsubscribeWeekPlan) unsubscribeWeekPlan();
             }
             // Small delay to allow store updates to propagate before AuthGuard checks
             setTimeout(() => setLoading(false), 100);
         });
 
-        return () => unsubscribe();
+        return () => {
+            unsubscribeAuth();
+            if (unsubscribeWeekPlan) unsubscribeWeekPlan();
+        };
     }, []);
 
-    // Sync week plan changes to Firestore
+    // Sync local week plan changes TO Firestore
     useEffect(() => {
         if (!user) return;
 
@@ -96,12 +136,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
         let lastWeekPlan = useMealStore.getState().weekPlan;
 
         const unsubscribe = useMealStore.subscribe((state) => {
+            // Only sync if the change was local (not from the onSnapshot listener)
+            // Note: In a production app, we'd use a flag or check if the contents are identical
             if (state.weekPlan !== lastWeekPlan) {
                 lastWeekPlan = state.weekPlan;
                 clearTimeout(timeoutId);
                 timeoutId = setTimeout(() => {
                     saveWeekPlan(user.uid, state.weekPlan);
-                }, 2000);
+                }, 2000); // 2 second debounce for saving
             }
         });
 

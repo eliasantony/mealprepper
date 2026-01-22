@@ -46,3 +46,6 @@ serviceAccountKey.json
 # PWA
 public/sw.js
 public/workbox-*.js
+
+.agent
+.vscode

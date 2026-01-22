@@ -11,6 +11,7 @@ import { useAuth } from '@/context/AuthContext';
 import { MealCard } from './MealCard';
 import { RecipeDetails } from './RecipeDetails';
 import { Lightbulb, ArrowRight, ChefHat } from 'lucide-react';
+import { MealType } from '@/types';
 
 interface MealIdea {
     name: string;
@@ -19,11 +20,20 @@ interface MealIdea {
     tags: string[];
 }
 
+const slotLabels: Record<MealType, string> = {
+    breakfast: 'Breakfast',
+    lunch: 'Lunch',
+    afternoon_snack: 'Afternoon Snack',
+    dinner: 'Dinner',
+    evening_snack: 'Evening Snack',
+};
+
 interface MealGeneratorProps {
     onMealGenerated?: (meal: Meal) => void;
+    slotType?: MealType;
 }
 
-export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
+export const MealGenerator = ({ onMealGenerated, slotType }: MealGeneratorProps) => {
     const [prompt, setPrompt] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [generatedMeal, setGeneratedMeal] = useState<Meal | null>(null);
@@ -31,7 +41,17 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
     const [mode, setMode] = useState<'direct' | 'brainstorm'>('direct');
     const [mealIdeas, setMealIdeas] = useState<MealIdea[]>([]);
     const [selectedIdea, setSelectedIdea] = useState<MealIdea | null>(null);
-    const [selectedMealType, setSelectedMealType] = useState<string>('Dinner');
+
+    // Initial display type for brainstorm mode
+    const getInitialMealType = (slot?: MealType) => {
+        if (!slot) return 'Dinner';
+        if (slot === 'breakfast') return 'Breakfast';
+        if (slot === 'lunch') return 'Lunch';
+        if (slot === 'dinner') return 'Dinner';
+        return 'Snack';
+    };
+
+    const [selectedMealType, setSelectedMealType] = useState<string>(getInitialMealType(slotType));
     const [keywords, setKeywords] = useState('');
     const [timeLimit, setTimeLimit] = useState<string>('');
     const addSavedMeal = useMealStore((state) => state.addSavedMeal);
@@ -53,6 +73,7 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
                 userPreferences: preferences,
                 mode: mode === 'brainstorm' && !idea ? 'brainstorm' : 'recipe',
                 mealIdea: idea,
+                mealType: slotType, // Pass the slot type for context awareness
                 keywords: mode === 'brainstorm' ? keywords : undefined,
                 timeLimit: mode === 'brainstorm' ? timeLimit : undefined
             };
@@ -141,7 +162,7 @@ export const MealGenerator = ({ onMealGenerated }: MealGeneratorProps) => {
                     <textarea
                         value={prompt}
                         onChange={(e) => setPrompt(e.target.value)}
-                        placeholder="e.g., High protein breakfast with eggs..."
+                        placeholder={slotType ? `Describe your ${slotLabels[slotType].toLowerCase()}...` : "e.g., High protein breakfast with eggs..."}
                         className="w-full px-4 py-3 rounded-xl bg-secondary/50 border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 focus:border-orange-500/50 transition-all resize-y"
                         rows={4}
                         onKeyDown={(e) => {

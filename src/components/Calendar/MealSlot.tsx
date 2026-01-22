@@ -16,9 +16,9 @@ interface MealSlotProps {
 const slotLabels: Record<MealType, string> = {
     breakfast: 'Breakfast',
     lunch: 'Lunch',
-    'snack-afternoon': 'Afternoon Snack',
+    afternoon_snack: 'Afternoon Snack',
     dinner: 'Dinner',
-    'snack-evening': 'Evening Snack',
+    evening_snack: 'Evening Snack',
 };
 
 export const MealSlot = ({ date, slotType, meal, onClick }: MealSlotProps) => {

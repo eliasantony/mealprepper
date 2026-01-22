@@ -26,6 +26,7 @@ export const metadata: Metadata = {
     title: "MealPrepper",
   },
   icons: {
+    icon: "/logo-round.png",
     apple: "/icons/apple-touch-icon.png",
   },
 };

@@ -5,11 +5,12 @@ import { useMealStore } from '@/store/mealStore';
 import { MealCard } from '@/components/Meal/MealCard';
 import { RecipeDetails } from '@/components/Meal/RecipeDetails';
 import { CreateMealModal } from '@/components/Meal/CreateMealModal';
-import { BookOpen, Trash2, Search, Plus, ChefHat, Bookmark } from 'lucide-react';
+import { BookOpen, Trash2, Search, Plus, ChefHat, Bookmark, Globe } from 'lucide-react';
 import { Meal } from '@/types';
 import { deleteMealFromFirestore, removeBookmark } from '@/services/firestoreService';
 import { useAuth } from '@/context/AuthContext';
 import { cn } from '@/lib/utils';
+import Link from 'next/link';
 
 type TabType = 'my-recipes' | 'bookmarked';
 
@@ -77,6 +78,13 @@ export default function SavedMealsPage() {
                             className="pl-10 pr-4 py-2 rounded-xl bg-card border border-border text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-orange-500/50 w-full md:w-64"
                         />
                     </div>
+                    <Link
+                        href="/browse"
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-foreground rounded-xl font-medium hover:bg-muted transition-colors border border-border whitespace-nowrap"
+                    >
+                        <Globe className="w-4 h-4" />
+                        Explore
+                    </Link>
                     <button
                         onClick={() => setIsCreateModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-500/20 whitespace-nowrap"
@@ -140,17 +148,31 @@ export default function SavedMealsPage() {
                         <>
                             <ChefHat className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
                             <h3 className="text-xl font-semibold text-foreground mb-2">No Recipes Yet</h3>
-                            <p className="text-muted-foreground max-w-sm mx-auto">
+                            <p className="text-muted-foreground max-w-sm mx-auto mb-6">
                                 Create your own recipes or generate them with AI on the Weekly Plan page.
                             </p>
+                            <button
+                                onClick={() => setIsCreateModalOpen(true)}
+                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-orange-600 text-white rounded-xl font-medium hover:bg-orange-700 transition-colors shadow-lg shadow-orange-500/20"
+                            >
+                                <Plus className="w-5 h-5" />
+                                Create Your First Recipe
+                            </button>
                         </>
                     ) : (
                         <>
                             <Bookmark className="w-16 h-16 mx-auto mb-4 text-muted-foreground/20" />
                             <h3 className="text-xl font-semibold text-foreground mb-2">No Bookmarks</h3>
-                            <p className="text-muted-foreground max-w-sm mx-auto">
+                            <p className="text-muted-foreground max-w-sm mx-auto mb-6">
                                 Browse public recipes and bookmark your favorites to save them here.
                             </p>
+                            <Link
+                                href="/browse"
+                                className="inline-flex items-center gap-2 px-6 py-2.5 bg-secondary text-foreground rounded-xl font-medium hover:bg-muted transition-colors border border-border"
+                            >
+                                <Globe className="w-5 h-5 text-orange-500" />
+                                Discover Public Recipes
+                            </Link>
                         </>
                     )}
                 </div>

@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useMealStore } from '@/store/mealStore';
 import { useUserStore } from '@/store/userStore';
 import { useAuth } from '@/context/AuthContext';
-import { saveMealToFirestore } from '@/services/firestoreService';
+import { saveMealToFirestore, bookmarkRecipe } from '@/services/firestoreService';
 import { cn } from '@/lib/utils';
 
 /**
@@ -284,25 +284,37 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect, selectButtonL
                 ...displayMeal,
                 servings: currentServings,
                 visibility,
-                author: user?.displayName || 'Anonymous',
-                userId: user?.uid,
                 createdAt: displayMeal.createdAt || new Date().toISOString()
             };
+
+            // If user is owner or it's a new meal (no id yet), save to their personal collection
+            const isOwner = user && displayMeal.userId === user.uid;
 
             // Optimistically update local state
             setDisplayMeal(mealToSave);
 
-            addSavedMeal(mealToSave);
-            // Also update the selected meal in store to reflect changes
-            setSelectedMeal(mealToSave);
-
             if (user) {
                 try {
-                    await saveMealToFirestore(user.uid, mealToSave);
+                    if (isOwner) {
+                        addSavedMeal(mealToSave);
+                        await saveMealToFirestore(user.uid, mealToSave);
+                    } else {
+                        // Public recipe from someone else - BOOKMARK it instead
+                        useMealStore.getState().addBookmark(mealToSave);
+                        await bookmarkRecipe(user.uid, mealToSave.id);
+                        toast.success('Added to bookmarks!');
+                    }
                 } catch (error) {
-                    console.error("Failed to save meal to Firestore:", error);
+                    console.error("Failed to save/bookmark meal:", error);
+                    toast.error('Failed to save to your library');
                 }
+            } else {
+                // Non-logged in users just get local state update
+                addSavedMeal(mealToSave);
             }
+
+            // Also update the selected meal in store to reflect changes
+            setSelectedMeal(mealToSave);
         }
 
         setIsSaving(false);
@@ -436,20 +448,29 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect, selectButtonL
                                             disabled={isSaving || (isAlreadySaved && !onSelect)}
                                             className={cn(
                                                 "px-8 py-2 rounded-lg font-medium text-sm flex items-center gap-2 transition-all",
-                                                isAlreadySaved
-                                                    ? "bg-green-500/10 text-green-600 cursor-default"
-                                                    : "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20"
+                                                isSaved
+                                                    ? "bg-green-500 text-white shadow-lg shadow-green-500/20"
+                                                    : onSelect
+                                                        ? "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20"
+                                                        : isAlreadySaved
+                                                            ? "bg-green-500/10 text-green-600 cursor-default"
+                                                            : "bg-orange-500 text-white hover:bg-orange-600 shadow-lg shadow-orange-500/20"
                                             )}
                                         >
-                                            {isAlreadySaved || isSaved ? (
+                                            {isSaved ? (
                                                 <>
                                                     <Check className="w-4 h-4" />
-                                                    {onSelect ? 'Used' : 'Saved'}
+                                                    {onSelect ? 'Added!' : 'Saved!'}
+                                                </>
+                                            ) : (isAlreadySaved && !onSelect) ? (
+                                                <>
+                                                    <Check className="w-4 h-4" />
+                                                    Saved
                                                 </>
                                             ) : (
                                                 <>
                                                     {isSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-                                                    {selectButtonLabel || (onSelect ? 'Save & Use' : 'Save Meal')}
+                                                    {selectButtonLabel || (onSelect ? 'Use this Meal' : 'Save Meal')}
                                                 </>
                                             )}
                                         </button>

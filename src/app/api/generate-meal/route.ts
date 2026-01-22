@@ -45,6 +45,7 @@ const RequestSchema = z.object({
   mealIdea: z.any().optional(),
   keywords: z.string().optional(),
   timeLimit: z.any().optional(), // accepting string or number
+  mealType: z.string().optional(),
 });
 
 export async function POST(req: Request) {
@@ -69,10 +70,11 @@ export async function POST(req: Request) {
       }
     }
 
+    const body = await req.json();
+
     // 2. Rate Limit Check (if userId available)
     if (userId) {
-      const mode = (await req.clone().json()).mode || 'generate';
-      const rateLimitResult = await checkAndIncrementAiUsage(userId, mode);
+      const rateLimitResult = await checkAndIncrementAiUsage(userId, body.mode || 'generate');
 
       if (!rateLimitResult.allowed) {
         return NextResponse.json({
@@ -83,8 +85,6 @@ export async function POST(req: Request) {
       }
     }
 
-    const body = await req.json();
-
     // 2. Input Validation
     const validationResult = RequestSchema.safeParse(body);
     if (!validationResult.success) {
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
       );
     }
 
-    const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit } = validationResult.data;
+    const { prompt, context, userPreferences, mode, mealIdea, keywords, timeLimit, mealType } = validationResult.data;
 
     // Additional logic check
     if (!prompt && !mealIdea && mode !== 'brainstorm' && mode !== 'recalculate' && mode !== 'brainstorm_week') {
@@ -401,10 +401,10 @@ Return ONLY a valid JSON array of objects with the following structure, no markd
       const userWeightGoal = userPreferences?.weightGoal as string;
       const weightGoalContext = userWeightGoal ? weightGoalMap[userWeightGoal] || 'balanced meals' : 'balanced meals';
 
-      // Determine calorie target based on meal type from the idea or default
+      // Determine calorie target based on meal type from the idea, passed mealType, or default
       const dailyCalories = userPreferences?.calorieGoal || 2000;
-      const mealType = mealIdea?.type || 'lunch';
-      const targetCalories = getMealCalorieTarget(mealType, dailyCalories);
+      const mealTypeToUse = mealType || mealIdea?.type || 'lunch';
+      const targetCalories = getMealCalorieTarget(mealTypeToUse, dailyCalories);
 
       systemPrompt = `
 You are a professional chef and nutritionist. Create a detailed meal recipe based on the user's request: "${generationPrompt}".
@@ -426,12 +426,12 @@ ${getBudgetContext(userPreferences?.budget)}
 ${INGREDIENT_INSTRUCTION}
 ${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
 
-TARGET CALORIES: This is a ${mealType}. Target approximately ${targetCalories} kcal per serving.
+TARGET CALORIES: This is a ${mealTypeToUse}. Target approximately ${targetCalories} kcal per serving.
 
 IMPORTANT: 
 1. Calculate macros (calories, protein, carbs, fats) PER SINGLE SERVING, not for the whole recipe.
 2. Be REALISTIC and ACCURATE with macro estimation. Don't just guess generic numbers.
-3. TARGET ${targetCalories} kcal per serving for this ${mealType}. Do NOT significantly exceed this.
+3. TARGET ${targetCalories} kcal per serving for this ${mealTypeToUse}. Do NOT significantly exceed this.
 4. Tailor the recipe to support the user's weight goal (${weightGoalContext}).
 5. Provide one relevant emoji that represents the dish.
 6. Adjust ingredient amounts for ${userPreferences?.portions || 2} servings.

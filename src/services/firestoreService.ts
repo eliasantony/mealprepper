@@ -146,9 +146,14 @@ export const getBookmarkedRecipes = async (userId: string): Promise<Meal[]> => {
         // Batch fetch recipes by ID
         const recipes: Meal[] = [];
         for (const bookmark of bookmarks) {
-            const recipeDoc = await getDoc(doc(db, 'recipes', bookmark.recipeId));
-            if (recipeDoc.exists()) {
-                recipes.push({ ...recipeDoc.data() as Meal, bookmarkedAt: bookmark.savedAt });
+            try {
+                const recipeDoc = await getDoc(doc(db, 'recipes', bookmark.recipeId));
+                if (recipeDoc.exists()) {
+                    recipes.push({ ...recipeDoc.data() as Meal, bookmarkedAt: bookmark.savedAt });
+                }
+            } catch (error) {
+                console.warn(`Could not fetch bookmarked recipe ${bookmark.recipeId}:`, error);
+                // Continue with other bookmarks instead of failing entirely
             }
         }
         return recipes;
@@ -250,7 +255,7 @@ export const saveWeekPlan = async (userId: string, weekPlan: WeekPlan) => {
     try {
         // Convert to slim format (IDs only) before saving
         const slimPlan = weekPlanToFirestore(weekPlan);
-        await setDoc(doc(db, 'users', userId), { weekPlan: slimPlan }, { merge: true });
+        await updateDoc(doc(db, 'users', userId), { weekPlan: slimPlan });
     } catch (error) {
         console.error('Error saving week plan:', error);
         throw error;

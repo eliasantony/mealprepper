@@ -16,9 +16,9 @@ interface DayColumnProps {
 const slots: MealType[] = [
     'breakfast',
     'lunch',
-    'snack-afternoon',
+    'afternoon_snack',
     'dinner',
-    'snack-evening',
+    'evening_snack',
 ];
 
 export const DayColumn = ({ date, dayPlan, isToday, onSlotClick }: DayColumnProps) => {
