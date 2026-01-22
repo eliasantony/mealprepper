@@ -36,26 +36,26 @@ export default function ProfilePage() {
                 </h2>
                 <div className="glass-card p-6 rounded-2xl space-y-6">
                     {user ? (
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4">
+                        <div className="flex items-center justify-between gap-4">
+                            <div className="flex items-center gap-4 min-w-0">
                                 {user.photoURL ? (
-                                    <img src={user.photoURL} alt={user.displayName || 'User'} className="w-12 h-12 rounded-full" />
+                                    <img src={user.photoURL} alt={user.displayName || 'User'} className="w-12 h-12 rounded-full shrink-0" />
                                 ) : (
-                                    <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500">
+                                    <div className="w-12 h-12 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-500 shrink-0">
                                         <UserIcon className="w-6 h-6" />
                                     </div>
                                 )}
-                                <div>
-                                    <h3 className="font-medium">{user.displayName || 'User'}</h3>
-                                    <p className="text-sm text-muted-foreground truncate max-w-[200px]">{user.email}</p>
+                                <div className="min-w-0">
+                                    <h3 className="font-medium truncate">{user.displayName || 'User'}</h3>
+                                    <p className="text-sm text-muted-foreground truncate">{user.email}</p>
                                 </div>
                             </div>
                             <button
                                 onClick={logout}
-                                className="px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2"
+                                className="px-3 py-2 text-sm font-medium text-red-500 hover:bg-red-500/10 rounded-lg transition-colors flex items-center gap-2 shrink-0"
                             >
                                 <LogOut className="w-4 h-4" />
-                                Sign Out
+                                <span className="whitespace-nowrap">Sign Out</span>
                             </button>
                         </div>
                     ) : (
