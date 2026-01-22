@@ -266,52 +266,52 @@ Return ONLY a valid JSON array of objects with the following structure, no markd
       }).join('\n');
 
       systemPrompt = `
-You are an efficient Meal Prep Pro and nutritionist.
-The user has selected slots for their week and wants recipes.
-The grouping is as follows (Type -> Number of meals needed):
-${Object.entries(typeCounts).map(([type, data]) => `- ${type}: ${data.count} meals`).join('\n')}
+        You are an efficient Meal Prep Pro and nutritionist.
+        The user has selected slots for their week and wants recipes.
+        The grouping is as follows (Type -> Number of meals needed):
+        ${Object.entries(typeCounts).map(([type, data]) => `- ${type}: ${data.count} meals`).join('\n')}
 
-${keywordsStr}
+        ${keywordsStr}
 
-User Profile:
-- Diet: ${userPreferences?.dietaryType || 'Any'}
-- Weight Goal: ${weightGoalContext}
-- Daily Calorie Target: ${dailyCalories} kcal
-- Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
-- Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
-- Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
-- Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
-- Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
+        User Profile:
+        - Diet: ${userPreferences?.dietaryType || 'Any'}
+        - Weight Goal: ${weightGoalContext}
+        - Daily Calorie Target: ${dailyCalories} kcal
+        - Allergies: ${userPreferences?.allergies?.join(', ') || 'None'}
+        - Dislikes: ${userPreferences?.dislikes?.join(', ') || 'None'}
+        - Preferred Cuisines: ${userPreferences?.cuisines?.join(', ') || 'Any'}
+        - Cooking Skill: ${userPreferences?.cookingSkill || 'intermediate'}
+        - Max Cooking Time: ${userPreferences?.cookingTime || 30} minutes
 
-${getRegionContext(userPreferences?.region)}
-${getBudgetContext(userPreferences?.budget)}
-${INGREDIENT_INSTRUCTION}
-${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
+        ${getRegionContext(userPreferences?.region)}
+        ${getBudgetContext(userPreferences?.budget)}
+        ${INGREDIENT_INSTRUCTION}
+        ${getTasteProfileContext(userPreferences?.tasteProfile, userPreferences?.additionalNotes)}
 
-CALORIE TARGETS PER MEAL TYPE (IMPORTANT - DO NOT EXCEED):
-${mealTypeCalorieTargets}
+        CALORIE TARGETS PER MEAL TYPE (IMPORTANT - DO NOT EXCEED):
+        ${mealTypeCalorieTargets}
 
-CRITICAL INSTRUCTIONS:
-1. For EACH unique meal type requested, provide ONE single recipe idea.
-2. The user will cook this ONE recipe in bulk.
-3. ${regenInstruction}
-4. STRICTLY adhere to the calorie targets above. A lunch should be ~${getMealCalorieTarget('lunch', dailyCalories)} kcal, NOT 1000+ kcal.
-5. Tailor recipes to support the user's weight goal (${weightGoalContext}).
-6. Return a valid JSON array of objects.
-7. Include an estimate of calories per serving and a short string of key ingredients.
+        CRITICAL INSTRUCTIONS:
+        1. For EACH unique meal type requested, provide ONE single recipe idea.
+        2. The user will cook this ONE recipe in bulk.
+        3. ${regenInstruction}
+        4. STRICTLY adhere to the calorie targets above. A lunch should be ~${getMealCalorieTarget('lunch', dailyCalories)} kcal, NOT 1000+ kcal.
+        5. Tailor recipes to support the user's weight goal (${weightGoalContext}).
+        6. Return a valid JSON array of objects.
+        7. Include an estimate of calories per serving and a short string of key ingredients.
 
-Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
-[
-    {
-        "type": "lunch", // Use the EXACT key provided in the request (e.g. "lunch" or "lunch_1")
-        "name": "Meal Name",
-        "description": "Brief description of this bulk meal prep dish",
-        "emoji": "🍲 ", // Only one most fitting
-        "servingsRequired": 3, // The number of meals requested for this type
-        "calories": ${getMealCalorieTarget('lunch', dailyCalories)}, // Estimate per serving - MUST match target!
-        "keyIngredients": "Chicken, Rice, Broccoli"
-    }
-]
+        Return ONLY a valid JSON array of objects with the following structure, no markdown formatting:
+        [
+            {
+                "type": "lunch", // Use the EXACT key provided in the request (e.g. "lunch" or "lunch_1")
+                "name": "Meal Name",
+                "description": "Brief description of this bulk meal prep dish",
+                "emoji": "🍲 ", // Only one most fitting
+                "servingsRequired": 3, // The number of meals requested for this type
+                "calories": ${getMealCalorieTarget('lunch', dailyCalories)}, // Estimate per serving - MUST match target!
+                "keyIngredients": "Chicken, Rice, Broccoli"
+            }
+        ]
       `;
 
     } else if (context && mode !== 'recalculate') {
@@ -354,6 +354,8 @@ Return ONLY a valid JSON array of objects with the following structure, no markd
                         { "name": "Ingredient 1", "amount": "1 cup" }
                     ],
                     "instructions": ["Step 1", "Step 2"],
+                    "storageInstructions": "Instructions on how to store the meal (fridge/freezer life)",
+                    "reheatingInstructions": "Instructions on how to reheat the meal for best results",
                     "macros": {
                         "calories": 500,
                         "protein": 30,
@@ -449,6 +451,8 @@ Return ONLY a valid JSON object with the following structure, no markdown format
         { "name": "Ingredient 2", "amount": "2 tbsp" }
     ],
     "instructions": ["Step 1", "Step 2", "..."],
+    "storageInstructions": "Specific instructions on how to best store this meal (e.g., 'Store in airtight container in fridge for up to 4 days, or freeze for 3 months.')",
+    "reheatingInstructions": "Specific instructions on how to best reheat this meal (e.g., 'Reheat in microwave for 2-3 minutes with a splash of water, or in a pan over medium heat.')",
     "macros": {
         "calories": ${targetCalories},
         "protein": 30,

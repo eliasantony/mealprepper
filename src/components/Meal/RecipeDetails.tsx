@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Meal } from '@/types';
-import { X, Clock, Flame, Utensils, ChefHat, Sparkles, Loader2, Plus, Check, Edit2, Save, Trash, RefreshCw, Droplets, Globe, Lock, Copy } from 'lucide-react';
+import { X, Clock, Flame, Utensils, ChefHat, Sparkles, Loader2, Plus, Check, Edit2, Save, Trash, RefreshCw, Droplets, Globe, Lock, Copy, Refrigerator, Microwave } from 'lucide-react';
 import { toast } from 'sonner';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useMealStore } from '@/store/mealStore';
@@ -699,6 +699,55 @@ export const RecipeDetails = ({ meal, onClose, onUpdate, onSelect, selectButtonL
                                 </ol>
                             </div>
                         </div>
+
+                        {(isEditing || displayMeal.storageInstructions || displayMeal.reheatingInstructions) && (
+                            <div className="pt-6 border-t border-border">
+                                <h3 className="font-semibold text-foreground mb-4 flex items-center gap-2">
+                                    <Refrigerator className="w-5 h-5 text-orange-500" />
+                                    Meal Prep Guide
+                                </h3>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                                            <Refrigerator className="w-4 h-4 text-muted-foreground" />
+                                            Storage
+                                        </div>
+                                        {isEditing && editedMeal ? (
+                                            <textarea
+                                                value={editedMeal.storageInstructions || ''}
+                                                onChange={(e) => setEditedMeal({ ...editedMeal, storageInstructions: e.target.value })}
+                                                className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                                                rows={3}
+                                                placeholder="e.g., 'Store in airtight container in fridge for up to 4 days.'"
+                                            />
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                {displayMeal.storageInstructions || 'No storage instructions provided.'}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center gap-2 text-sm font-medium text-foreground">
+                                            <Microwave className="w-4 h-4 text-muted-foreground" />
+                                            Reheating
+                                        </div>
+                                        {isEditing && editedMeal ? (
+                                            <textarea
+                                                value={editedMeal.reheatingInstructions || ''}
+                                                onChange={(e) => setEditedMeal({ ...editedMeal, reheatingInstructions: e.target.value })}
+                                                className="w-full bg-secondary/50 border border-border rounded-lg px-3 py-2 text-sm resize-none focus:outline-none focus:ring-2 focus:ring-orange-500/50"
+                                                rows={3}
+                                                placeholder="e.g., 'Microwave for 2-3 minutes with a splash of water.'"
+                                            />
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground leading-relaxed">
+                                                {displayMeal.reheatingInstructions || 'No reheating instructions provided.'}
+                                            </p>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 </motion.div>
             </div>

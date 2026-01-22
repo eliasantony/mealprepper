@@ -104,7 +104,16 @@ export const MealGenerator = ({ onMealGenerated, slotType }: MealGeneratorProps)
                     setMealIdeas(data.ideas);
                 }
             } else if (data.meal) {
-                setGeneratedMeal(data.meal);
+                // IMPORTANT: Inject user ownership here
+                const initialMeal = {
+                    ...data.meal,
+                    userId: user?.uid,
+                    author: user?.displayName || 'Me',
+                    createdAt: new Date().toISOString(),
+                    // Ensure ID is unique if we proceed to save it
+                    id: crypto.randomUUID()
+                };
+                setGeneratedMeal(initialMeal);
                 setShowDetails(true); // Auto-open details
             }
         } catch (error) {

@@ -31,6 +31,8 @@ export interface Meal {
   createdAt?: string;
   timeLimit?: number;
   bookmarkedAt?: string; // Set when this is a bookmarked recipe
+  storageInstructions?: string;
+  reheatingInstructions?: string;
 }
 
 export interface DayPlan {
