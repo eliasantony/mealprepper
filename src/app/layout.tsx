@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import React from "react";
-import { Inter } from "next/font/google";
+import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/Layout/Header";
 import { MainLayout } from "@/components/Layout/MainLayout";
@@ -14,7 +14,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next";
 import clsx from "clsx";
 import { Toaster } from "sonner";
 
-const inter = Inter({ subsets: ["latin"] });
+const plusJakartaSans = Plus_Jakarta_Sans({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "MealPrepper - AI Meal Planning",
@@ -42,7 +42,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={clsx(inter.className, "bg-background min-h-screen flex flex-col")} suppressHydrationWarning>
+      <body className={clsx(plusJakartaSans.className, "bg-background min-h-screen flex flex-col")} suppressHydrationWarning>
         <ThemeProvider
           attribute="class"
           defaultTheme="dark"

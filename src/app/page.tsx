@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { ArrowRight, ChefHat, Calendar, Smartphone, Sparkles, Activity, Utensils, Settings } from "lucide-react";
+import { ArrowRight, ChefHat, Calendar, Smartphone, Sparkles, Activity, Utensils, Settings, Bell } from "lucide-react";
 import { Footer } from "@/components/Layout/Footer";
 
 export default function LandingPage() {
@@ -142,14 +142,14 @@ export default function LandingPage() {
                 description: "Vegan, Keto, Paleo? No problem. Customize your profile to get recommendations that fit your lifestyle."
               },
               {
-                icon: <Utensils className="w-8 h-8 text-orange-500" />,
-                title: "Ingredient Management",
-                description: "Never miss an item. Automatically generate shopping lists from your weekly meal plan."
+                icon: <Bell className="w-8 h-8 text-orange-500" />,
+                title: "Smart Notifications",
+                description: "Stay consistent with timely reminders and push notifications that keep you connected to your meal schedule."
               },
               {
                 icon: <Smartphone className="w-8 h-8 text-orange-500" />,
-                title: "Mobile First Design",
-                description: "Access your plans and lists on the go. Optimized for a seamless experience on any device."
+                title: "PWA Integration",
+                description: "Install MealPrepper on any device. Get a native-app feel with offline support and instant home-screen access."
               }
             ].map((feature, index) => (
               <motion.div
@@ -180,7 +180,7 @@ export default function LandingPage() {
             <div className="relative z-10 max-w-3xl mx-auto">
               <h2 className="text-3xl lg:text-6xl font-bold mb-8">Ready to transform your diet?</h2>
               <p className="text-orange-100 text-xl mb-10 leading-relaxed">
-                Join thousands of users who have simplified their meal planning routine and achieved their nutrition goals.
+                Join users who have simplified their meal planning routine and achieved their nutrition goals.
               </p>
               <Link
                 href="/login"
